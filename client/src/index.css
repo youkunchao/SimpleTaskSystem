@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Comic Sans MS', sans-serif;
+  background: linear-gradient(135deg, #FFF8E7 0%, #FFE4F1 50%, #E0F2FE 100%);
+  min-height: 100vh;
+}
+
+/* 大字体按钮通用样式 */
+.btn-kid {
+  @apply text-xl font-bold rounded-2xl px-8 py-4 transition-all duration-200 shadow-lg active:scale-95;
+}
