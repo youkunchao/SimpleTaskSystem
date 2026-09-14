@@ -10,5 +10,29 @@ body {
 
 /* 大字体按钮通用样式 */
 .btn-kid {
-  @apply text-xl font-bold rounded-2xl px-8 py-4 transition-all duration-200 shadow-lg active:scale-95;
+  @apply text-xl font-bold rounded-2xl px-6 py-3 transition-all duration-200 shadow-lg active:scale-95 inline-flex items-center justify-center gap-2;
 }
+
+/* 统一图标样式 */
+.icon-tab {
+  @apply inline-flex items-center justify-center text-2xl leading-none w-7 h-7;
+}
+
+.icon-nav {
+  @apply inline-flex items-center justify-center text-2xl leading-none;
+}
+
+.icon-btn {
+  @apply inline-flex items-center justify-center text-xl leading-none;
+}
+
+/* 内容配图统一尺寸 */
+.emoji-card {
+  @apply inline-flex items-center justify-center leading-none;
+}
+
+/* Tab 按钮统一样式 */
+.tab-btn {
+  @apply inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl font-bold whitespace-nowrap transition-all duration-200 active:scale-95;
+}
+
