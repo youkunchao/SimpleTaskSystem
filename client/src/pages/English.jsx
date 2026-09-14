@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import api, { speak } from '../api.js';
 
-const CATEGORIES = ['动物', '食物', '颜色', '数字', '家庭'];
+const CATEGORIES = ['动物', '食物', '水果', '颜色', '数字', '家庭', '家具', '球类', '交通', '衣物'];
 const GRAMMAR_TYPES = [
   { id: 'noun', name: '名词' },
   { id: 'pronoun', name: '代词' },
@@ -39,8 +39,7 @@ export default function English() {
   const [testAnswer, setTestAnswer] = useState(null);
 
   // 通用提交答案
-  const submitAnswer = async (module, item, selectedIdx, correctIdx, question, userAns, correctAns, explanation) => {
-    const correct = selectedIdx === correctIdx;
+  const submitAnswer = async (module, item, correct, question, userAns, correctAns, explanation) => {
     setTestAnswer(correct);
     try {
       await api.post('/progress', {
@@ -63,7 +62,7 @@ export default function English() {
   // 加载各模块数据
   useEffect(() => {
     if (!activeChild) return;
-    api.get(`/courses/words?category=${category}`).then(r => setWords(r.data)).catch(() => {});
+    api.get('/courses/words', { params: { category } }).then(r => setWords(r.data)).catch(() => {});
   }, [category, activeChild]);
 
   useEffect(() => {
@@ -127,9 +126,15 @@ export default function English() {
               <>
                 <div className="text-8xl mb-3">{curWord.emoji}</div>
                 <div className="text-5xl font-bold text-kid-blue mb-2">{curWord.english}</div>
-                <div className="text-2xl text-gray-600 mb-4">{curWord.chinese}</div>
-                <button onClick={() => speak(curWord.english, 'en-US')} className="btn-kid bg-kid-blue text-white mr-2">🔊 听读音</button>
-                <button onClick={() => { setMode('test'); setTestAnswer(null); }} className="btn-kid bg-kid-green text-white">🎯 选词测试</button>
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <span className="text-3xl text-gray-700">{curWord.chinese}</span>
+                  <button onClick={() => speak(curWord.chinese, 'zh-CN')} className="text-kid-green text-xl" title="读中文">🔊</button>
+                </div>
+                <div className="text-sm text-gray-400 mb-4">👆 中英文对照学习</div>
+                <div className="flex justify-center gap-2">
+                  <button onClick={() => speak(curWord.english, 'en-US')} className="btn-kid bg-kid-blue text-white">🔊 英文</button>
+                  <button onClick={() => { setMode('test'); setTestAnswer(null); }} className="btn-kid bg-kid-green text-white">🎯 选词测试</button>
+                </div>
                 <div className="mt-4 text-sm text-gray-400">{idx + 1} / {words.length}</div>
               </>
             ) : mode === 'test' ? (
@@ -139,7 +144,7 @@ export default function English() {
                 <div className="text-lg text-gray-500 mb-6">对应的英文单词是？</div>
                 <div className="space-y-3 mb-4">
                   {[...words.filter(w => w.id !== curWord.id).slice(0, 3), curWord].sort(() => Math.random() - 0.5).map((opt, i) => (
-                    <button key={i} onClick={() => { submitAnswer('english', curWord, i, words.indexOf(curWord), curWord.chinese, opt.english, curWord.english, ''); nextItem(words); }}
+                    <button key={i} onClick={() => { submitAnswer('english', curWord, opt.id === curWord.id, curWord.chinese, opt.english, curWord.english, ''); nextItem(words); }}
                       disabled={testAnswer !== null}
                       className={`w-full p-4 text-2xl font-bold rounded-2xl border-4 transition ${
                         testAnswer === null ? 'bg-gray-50 border-gray-200 hover:border-kid-blue' :
@@ -174,7 +179,7 @@ export default function English() {
           <div className="text-2xl font-bold text-gray-800 my-6 text-center">{curGram.question}</div>
           <div className="space-y-3">
             {JSON.parse(curGram.options).map((opt, i) => (
-              <button key={i} onClick={() => { submitAnswer('grammar', curGram, i, curGram.answer, curGram.question, opt, JSON.parse(curGram.options)[curGram.answer], curGram.explanation); nextItem(grammar); }}
+              <button key={i} onClick={() => { submitAnswer('grammar', curGram, i === curGram.answer, curGram.question, opt, JSON.parse(curGram.options)[curGram.answer], curGram.explanation); nextItem(grammar); }}
                 disabled={testAnswer !== null}
                 className={`w-full p-4 text-xl font-bold rounded-2xl border-4 transition text-left ${
                   testAnswer === null ? 'bg-gray-50 border-gray-200 hover:border-kid-purple' :
@@ -212,7 +217,7 @@ export default function English() {
           <div className="text-xl font-bold text-gray-800 mb-4 text-center">{curListen.question}</div>
           <div className="grid grid-cols-2 gap-3">
             {JSON.parse(curListen.options).map((opt, i) => (
-              <button key={i} onClick={() => { submitAnswer('listening', curListen, i, curListen.answer, curListen.question, opt, JSON.parse(curListen.options)[curListen.answer], ''); nextItem(listening); }}
+              <button key={i} onClick={() => { submitAnswer('listening', curListen, i === curListen.answer, curListen.question, opt, JSON.parse(curListen.options)[curListen.answer], ''); nextItem(listening); }}
                 disabled={testAnswer !== null}
                 className={`p-4 text-lg font-bold rounded-2xl border-4 transition ${
                   testAnswer === null ? 'bg-gray-50 border-gray-200 hover:border-kid-blue' :
@@ -240,7 +245,7 @@ export default function English() {
           <div className="text-lg font-bold text-gray-800 mb-4">{curRead.question}</div>
           <div className="space-y-3">
             {JSON.parse(curRead.options).map((opt, i) => (
-              <button key={i} onClick={() => { submitAnswer('reading', curRead, i, curRead.answer, curRead.question, opt, JSON.parse(curRead.options)[curRead.answer], ''); nextItem(reading); }}
+              <button key={i} onClick={() => { submitAnswer('reading', curRead, i === curRead.answer, curRead.question, opt, JSON.parse(curRead.options)[curRead.answer], ''); nextItem(reading); }}
                 disabled={testAnswer !== null}
                 className={`w-full p-4 text-lg font-bold rounded-2xl border-4 transition text-left ${
                   testAnswer === null ? 'bg-gray-50 border-gray-200 hover:border-kid-green' :

@@ -443,7 +443,63 @@ function seedNewModules() {
   console.log('✅ 新模块种子数据插入完成');
 }
 
+// ==================== 扩充单词分类（水果/家具/球类/交通/衣物）====================
+function seedMoreWords() {
+  const fruitCount = db.prepare("SELECT COUNT(*) as c FROM words WHERE category = '水果'").get().c;
+  if (fruitCount > 0) return;
+
+  const moreWords = [
+    // 水果
+    { english: 'apple', chinese: '苹果', category: '水果', emoji: '🍎' },
+    { english: 'banana', chinese: '香蕉', category: '水果', emoji: '🍌' },
+    { english: 'orange', chinese: '橙子', category: '水果', emoji: '🍊' },
+    { english: 'grape', chinese: '葡萄', category: '水果', emoji: '🍇' },
+    { english: 'watermelon', chinese: '西瓜', category: '水果', emoji: '🍉' },
+    { english: 'strawberry', chinese: '草莓', category: '水果', emoji: '🍓' },
+    { english: 'pear', chinese: '梨', category: '水果', emoji: '🍐' },
+    { english: 'peach', chinese: '桃子', category: '水果', emoji: '🍑' },
+    // 家具
+    { english: 'bed', chinese: '床', category: '家具', emoji: '🛏️' },
+    { english: 'chair', chinese: '椅子', category: '家具', emoji: '🪑' },
+    { english: 'table', chinese: '桌子', category: '家具', emoji: '🪵' },
+    { english: 'sofa', chinese: '沙发', category: '家具', emoji: '🛋️' },
+    { english: 'desk', chinese: '书桌', category: '家具', emoji: '🗄️' },
+    { english: 'door', chinese: '门', category: '家具', emoji: '🚪' },
+    { english: 'window', chinese: '窗户', category: '家具', emoji: '🪟' },
+    { english: 'lamp', chinese: '灯', category: '家具', emoji: '💡' },
+    // 球类
+    { english: 'ball', chinese: '球', category: '球类', emoji: '⚽' },
+    { english: 'football', chinese: '足球', category: '球类', emoji: '⚽' },
+    { english: 'basketball', chinese: '篮球', category: '球类', emoji: '🏀' },
+    { english: 'tennis', chinese: '网球', category: '球类', emoji: '🎾' },
+    { english: 'volleyball', chinese: '排球', category: '球类', emoji: '🏐' },
+    { english: 'ping-pong', chinese: '乒乓球', category: '球类', emoji: '🏓' },
+    { english: 'baseball', chinese: '棒球', category: '球类', emoji: '⚾' },
+    // 交通工具
+    { english: 'car', chinese: '汽车', category: '交通', emoji: '🚗' },
+    { english: 'bus', chinese: '公交车', category: '交通', emoji: '🚌' },
+    { english: 'bike', chinese: '自行车', category: '交通', emoji: '🚲' },
+    { english: 'train', chinese: '火车', category: '交通', emoji: '🚆' },
+    { english: 'plane', chinese: '飞机', category: '交通', emoji: '✈️' },
+    { english: 'ship', chinese: '轮船', category: '交通', emoji: '🚢' },
+    { english: 'taxi', chinese: '出租车', category: '交通', emoji: '🚕' },
+    { english: 'boat', chinese: '小船', category: '交通', emoji: '⛵' },
+    // 衣物
+    { english: 'shirt', chinese: '衬衫', category: '衣物', emoji: '👕' },
+    { english: 'pants', chinese: '裤子', category: '衣物', emoji: '👖' },
+    { english: 'shoes', chinese: '鞋子', category: '衣物', emoji: '👟' },
+    { english: 'hat', chinese: '帽子', category: '衣物', emoji: '🎩' },
+    { english: 'dress', chinese: '连衣裙', category: '衣物', emoji: '👗' },
+    { english: 'coat', chinese: '外套', category: '衣物', emoji: '🧥' },
+    { english: 'socks', chinese: '袜子', category: '衣物', emoji: '🧦' },
+  ];
+  const insertWord = db.prepare('INSERT INTO words (english, chinese, category, emoji) VALUES (?, ?, ?, ?)');
+  moreWords.forEach(w => insertWord.run(w.english, w.chinese, w.category, w.emoji));
+  console.log('✅ 扩充单词分类完成（水果/家具/球类/交通/衣物）');
+}
+
 seed();
 seedNewModules();
+seedMoreWords();
 
 export default db;
