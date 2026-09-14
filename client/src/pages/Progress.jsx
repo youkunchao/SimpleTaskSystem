@@ -18,7 +18,7 @@ export default function Progress() {
   if (!activeChild) return <p className="text-center text-gray-400 py-10">请先选择孩子</p>;
   if (!data) return <p className="text-center text-gray-400 py-10">加载中...</p>;
 
-  const moduleName = { characters: '汉字', english: '英语', math: '数学', books: '绘本' };
+  const moduleName = { characters: '汉字', english: '英语', math: '数学', books: '绘本', grammar: '语法', listening: '听力', reading: '阅读' };
 
   const pieData = data.byModule.map(m => ({ name: moduleName[m.module] || m.module, value: m.count }));
 
@@ -82,6 +82,37 @@ export default function Progress() {
               <Bar dataKey="count" fill="#FF8C42" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+        )}
+      </div>
+
+      {/* 五级记忆分布 */}
+      <div className="bg-white rounded-3xl shadow-lg p-5">
+        <h3 className="text-lg font-bold mb-3">🧠 艾宾浩斯记忆分布</h3>
+        <div className="grid grid-cols-5 gap-2">
+          {data.memoryDistribution?.map((m, i) => (
+            <div key={i} className={`rounded-2xl p-3 text-center ${['bg-red-50', 'bg-orange-50', 'bg-yellow-50', 'bg-green-50', 'bg-blue-50'][i]}`}>
+              <div className={`text-sm font-bold ${['text-red-500', 'text-orange-500', 'text-yellow-600', 'text-green-600', 'text-blue-600'][i]}`}>{m.label}</div>
+              <div className="text-2xl font-bold text-gray-800">{m.count}</div>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mt-2 text-center">陌生→初识→熟悉→熟练→精通，答对升级、答错重置</p>
+      </div>
+
+      {/* 错题统计 */}
+      <div className="bg-white rounded-3xl shadow-lg p-5">
+        <h3 className="text-lg font-bold mb-3">❌ 错题统计</h3>
+        {!data.wrongStats || data.wrongStats.length === 0 ? (
+          <p className="text-center text-gray-400 py-6">暂无错题，继续保持！</p>
+        ) : (
+          <div className="space-y-2">
+            {data.wrongStats.map((w, i) => (
+              <div key={i} className="flex items-center justify-between bg-red-50 rounded-2xl p-3">
+                <span className="font-bold text-gray-700">{moduleName[w.module] || w.module}</span>
+                <span className="text-red-500 font-bold">{w.count} 道</span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

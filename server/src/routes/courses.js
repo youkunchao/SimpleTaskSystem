@@ -64,4 +64,46 @@ router.get('/books/:id', (req, res) => {
   res.json(book);
 });
 
+// 英语语法题
+router.get('/grammar', (req, res) => {
+  const type = req.query.type;
+  let rows;
+  if (type) {
+    rows = db.prepare('SELECT * FROM grammar_problems WHERE type = ?').all(type);
+  } else {
+    rows = db.prepare('SELECT * FROM grammar_problems').all();
+  }
+  res.json(rows);
+});
+
+// 英语听力
+router.get('/listening', (req, res) => {
+  const category = req.query.category;
+  let rows;
+  if (category) {
+    rows = db.prepare('SELECT * FROM listening_materials WHERE category = ?').all(category);
+  } else {
+    rows = db.prepare('SELECT * FROM listening_materials').all();
+  }
+  res.json(rows);
+});
+
+// 英语阅读
+router.get('/reading', (req, res) => {
+  const category = req.query.category;
+  let rows;
+  if (category) {
+    rows = db.prepare('SELECT * FROM reading_materials WHERE category = ?').all(category);
+  } else {
+    rows = db.prepare('SELECT * FROM reading_materials').all();
+  }
+  res.json(rows);
+});
+
+// 中文阅读
+router.get('/chinese-reading', (req, res) => {
+  const rows = db.prepare('SELECT * FROM chinese_readings').all();
+  res.json(rows);
+});
+
 export default router;

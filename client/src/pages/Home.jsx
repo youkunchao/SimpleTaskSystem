@@ -63,7 +63,7 @@ export default function Home() {
                   <span className="text-3xl">{item.detail?.emoji || '📖'}</span>
                   <div>
                     <div className="font-bold text-lg">{item.detail?.hanzi || item.detail?.english}</div>
-                    <div className="text-xs text-gray-400">{moduleLabel[item.module]} · 间隔 {[1,2,4,7,15][item.interval_level]}天</div>
+                    <div className="text-xs text-gray-400">{moduleLabel[item.module]} · {item.memory_label} · 间隔 {[1,2,4,7,15][item.interval_level]}天</div>
                   </div>
                 </div>
                 <button onClick={() => item.module === 'characters' ? speak(item.detail.hanzi) : speak(item.detail.english, 'en-US')}
