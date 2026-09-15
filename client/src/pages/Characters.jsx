@@ -64,10 +64,8 @@ export default function Characters() {
       <div className="flex gap-2 overflow-x-auto pb-1">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-2xl font-bold whitespace-nowrap flex items-center gap-1 ${
-              tab === t.id ? 'bg-kid-orange text-white' : 'bg-white text-gray-600'
-            }`}>
-            <span>{t.icon}</span>{t.name}
+            className={`tab-btn ${tab === t.id ? 'bg-kid-orange text-white' : 'bg-white text-gray-600'}`}>
+            <span className="icon-tab">{t.icon}</span>{t.name}
           </button>
         ))}
       </div>
@@ -78,7 +76,7 @@ export default function Characters() {
           <div className="flex gap-2 overflow-x-auto pb-2">
             {LEVELS.map(l => (
               <button key={l.id} onClick={() => setLevel(l.id)}
-                className={`px-4 py-2 rounded-2xl font-bold whitespace-nowrap ${level === l.id ? 'bg-kid-orange text-white' : 'bg-white text-gray-600'}`}>
+                className={`tab-btn ${level === l.id ? 'bg-kid-orange text-white' : 'bg-white text-gray-600'}`}>
                 {l.name}
               </button>
             ))}
@@ -111,7 +109,7 @@ export default function Characters() {
                       setTimeout(() => {
                         if (idx < chars.length - 1) { setIdx(idx + 1); setMode('learn'); setTestAnswer(null); }
                         else setMode('done');
-                      }, 1200);
+                      }, 800);
                     }} disabled={testAnswer !== null}
                       className={`p-6 text-5xl font-bold rounded-2xl border-4 transition ${
                         testAnswer === null ? 'bg-gray-50 border-gray-200 hover:border-kid-blue' :
@@ -155,7 +153,7 @@ export default function Characters() {
                 setTimeout(() => {
                   if (idx < readings.length - 1) { setIdx(idx + 1); setTestAnswer(null); }
                   else setMode('done');
-                }, 1200);
+                }, 800);
               }} disabled={testAnswer !== null}
                 className={`w-full p-4 text-lg font-bold rounded-2xl border-4 transition text-left ${
                   testAnswer === null ? 'bg-gray-50 border-gray-200 hover:border-kid-orange' :

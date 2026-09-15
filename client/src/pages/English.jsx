@@ -54,7 +54,7 @@ export default function English() {
     setTimeout(() => {
       if (idx < list.length - 1) { setIdx(idx + 1); setMode('learn'); setTestAnswer(null); }
       else setMode('done');
-    }, 1500);
+    }, 800);
   };
 
   useEffect(() => { setIdx(0); setMode('learn'); setTestAnswer(null); }, [tab, category]);
@@ -102,10 +102,8 @@ export default function English() {
       <div className="flex gap-2 overflow-x-auto pb-1">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-2xl font-bold whitespace-nowrap flex items-center gap-1 ${
-              tab === t.id ? 'bg-kid-purple text-white' : 'bg-white text-gray-600'
-            }`}>
-            <span>{t.icon}</span>{t.name}
+            className={`tab-btn ${tab === t.id ? 'bg-kid-purple text-white' : 'bg-white text-gray-600'}`}>
+            <span className="icon-tab">{t.icon}</span>{t.name}
           </button>
         ))}
       </div>
@@ -116,7 +114,7 @@ export default function English() {
           <div className="flex gap-2 overflow-x-auto pb-2">
             {CATEGORIES.map(c => (
               <button key={c} onClick={() => setCategory(c)}
-                className={`px-4 py-2 rounded-2xl font-bold whitespace-nowrap ${category === c ? 'bg-kid-blue text-white' : 'bg-white text-gray-600'}`}>
+                className={`tab-btn ${category === c ? 'bg-kid-blue text-white' : 'bg-white text-gray-600'}`}>
                 {c}
               </button>
             ))}

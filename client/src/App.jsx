@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
+import Icon from './components/Icon.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Home from './pages/Home.jsx';
@@ -23,10 +24,10 @@ function Layout({ children }) {
   const location = useLocation();
 
   const navItems = [
-    { path: '/', label: '首页', icon: '🏠' },
-    { path: '/courses', label: '课程', icon: '📚' },
-    { path: '/progress', label: '进度', icon: '📊' },
-    { path: '/rewards', label: '奖励', icon: '🏆' },
+    { path: '/', label: '首页', icon: 'home' },
+    { path: '/courses', label: '课程', icon: 'book' },
+    { path: '/progress', label: '进度', icon: 'chart' },
+    { path: '/rewards', label: '奖励', icon: 'trophy' },
   ];
 
   return (
@@ -61,8 +62,8 @@ function Layout({ children }) {
                 location.pathname === item.path ? 'bg-kid-yellow/30 scale-110' : ''
               }`}
             >
-              <span className="text-2xl">{item.icon}</span>
-              <span className="text-xs font-bold text-gray-600">{item.label}</span>
+              <span className="icon-nav">{item.icon}</span>
+              <span className="text-xs font-bold text-gray-600 mt-0.5">{item.label}</span>
             </button>
           ))}
         </div>

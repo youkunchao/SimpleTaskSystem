@@ -67,7 +67,9 @@ export default function Home() {
                   </div>
                 </div>
                 <button onClick={() => item.module === 'characters' ? speak(item.detail.hanzi) : speak(item.detail.english, 'en-US')}
-                  className="bg-kid-blue text-white px-3 py-1 rounded-full text-sm">🔊 复习</button>
+                  className="inline-flex items-center gap-1 bg-kid-blue text-white px-3 py-1 rounded-full text-sm font-bold">
+                  <span className="icon-btn">🔊</span>复习
+                </button>
               </div>
             ))}
           </div>
