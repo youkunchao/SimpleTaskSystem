@@ -35,7 +35,9 @@ function Layout({ children }) {
       {/* 顶部栏 */}
       <header className="bg-white/80 backdrop-blur shadow-md sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-kid-orange">⭐ 启蒙星</h1>
+          <h1 className="text-2xl font-bold text-kid-orange inline-flex items-center gap-1.5">
+            <Icon name="sparkles" size={24} className="text-kid-yellow" />启蒙星
+          </h1>
           {activeChild ? (
             <div className="flex items-center gap-2">
               <span className="text-3xl">{activeChild.avatar}</span>
@@ -45,7 +47,9 @@ function Layout({ children }) {
           ) : (
             <button onClick={() => navigate('/courses')} className="text-sm bg-kid-blue text-white px-3 py-1 rounded-full">管理孩子</button>
           )}
-          <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500">退出</button>
+          <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500 inline-flex items-center gap-1">
+            <Icon name="logout" size={16} />退出
+          </button>
         </div>
       </header>
 
@@ -62,7 +66,7 @@ function Layout({ children }) {
                 location.pathname === item.path ? 'bg-kid-yellow/30 scale-110' : ''
               }`}
             >
-              <span className="icon-nav">{item.icon}</span>
+              <Icon name={item.icon} size={22} />
               <span className="text-xs font-bold text-gray-600 mt-0.5">{item.label}</span>
             </button>
           ))}

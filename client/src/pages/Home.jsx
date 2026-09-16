@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import api, { speak } from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 export default function Home() {
   const { activeChild } = useAuth();
@@ -21,10 +22,12 @@ export default function Home() {
   if (!activeChild) {
     return (
       <div className="text-center py-20">
-        <div className="text-6xl mb-4">👋</div>
+        <div className="text-6xl mb-4"><Icon name="smile" size={60} className="mx-auto text-kid-orange" /></div>
         <h2 className="text-2xl font-bold text-gray-700 mb-4">欢迎来到启蒙星！</h2>
         <p className="text-gray-500 mb-6">请先添加孩子档案开始学习</p>
-        <button onClick={() => navigate('/courses')} className="btn-kid bg-kid-orange text-white">去添加孩子</button>
+        <button onClick={() => navigate('/courses')} className="btn-kid bg-kid-orange text-white">
+          <Icon name="userPlus" size={20} />去添加孩子
+        </button>
       </div>
     );
   }
@@ -37,12 +40,18 @@ export default function Home() {
       <div className="bg-gradient-to-br from-kid-orange to-kid-yellow rounded-3xl shadow-xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">{activeChild.avatar} {activeChild.name}，你好！</h2>
+            <h2 className="text-2xl font-bold inline-flex items-center gap-2">
+              <span>{activeChild.avatar}</span>{activeChild.name}，你好！
+            </h2>
             <p className="opacity-90 mt-1">今天也要加油学习哦～</p>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold">⭐ {reward?.stars || 0}</div>
-            <div className="text-sm opacity-80">🔥 连续 {reward?.streak || 0} 天</div>
+            <div className="text-3xl font-bold inline-flex items-center gap-1">
+              <Icon name="star" size={26} />{reward?.stars || 0}
+            </div>
+            <div className="text-sm opacity-80 inline-flex items-center gap-1 justify-end">
+              <Icon name="flame" size={16} />连续 {reward?.streak || 0} 天
+            </div>
           </div>
         </div>
       </div>
@@ -50,7 +59,9 @@ export default function Home() {
       {/* 今日复习 */}
       <div className="bg-white rounded-3xl shadow-lg p-5">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xl font-bold text-gray-800">🔄 今日复习</h3>
+          <h3 className="text-xl font-bold text-gray-800 inline-flex items-center gap-2">
+            <Icon name="refresh" size={22} className="text-kid-blue" />今日复习
+          </h3>
           <span className="text-sm text-gray-400">{reviewItems.length} 项待复习</span>
         </div>
         {reviewItems.length === 0 ? (
@@ -68,7 +79,7 @@ export default function Home() {
                 </div>
                 <button onClick={() => item.module === 'characters' ? speak(item.detail.hanzi) : speak(item.detail.english, 'en-US')}
                   className="inline-flex items-center gap-1 bg-kid-blue text-white px-3 py-1 rounded-full text-sm font-bold">
-                  <span className="icon-btn">🔊</span>复习
+                  <Icon name="speaker" size={16} />复习
                 </button>
               </div>
             ))}
@@ -79,12 +90,12 @@ export default function Home() {
       {/* 快捷入口 */}
       <div className="grid grid-cols-2 gap-4">
         <button onClick={() => navigate('/courses')} className="bg-white rounded-3xl shadow-lg p-5 text-left hover:scale-105 transition">
-          <div className="text-4xl mb-2">📚</div>
+          <div className="text-4xl mb-2"><Icon name="book" size={40} className="text-kid-blue" /></div>
           <div className="font-bold text-lg">开始学习</div>
           <div className="text-sm text-gray-400">汉字/英语/数学/绘本</div>
         </button>
         <button onClick={() => navigate('/rewards')} className="bg-white rounded-3xl shadow-lg p-5 text-left hover:scale-105 transition">
-          <div className="text-4xl mb-2">🏆</div>
+          <div className="text-4xl mb-2"><Icon name="trophy" size={40} className="text-kid-orange" /></div>
           <div className="font-bold text-lg">我的奖励</div>
           <div className="text-sm text-gray-400">星星/徽章/打卡</div>
         </button>

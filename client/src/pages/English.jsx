@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import api, { speak } from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 const CATEGORIES = ['动物', '食物', '水果', '颜色', '数字', '家庭', '家具', '球类', '交通', '衣物'];
 const GRAMMAR_TYPES = [
@@ -14,11 +15,11 @@ const GRAMMAR_TYPES = [
 ];
 
 const TABS = [
-  { id: 'words', name: '单词', icon: '📝' },
-  { id: 'grammar', name: '语法', icon: '📐' },
-  { id: 'listening', name: '听力', icon: '🎧' },
-  { id: 'reading', name: '阅读', icon: '📖' },
-  { id: 'wrong', name: '错题', icon: '❌' },
+  { id: 'words', name: '单词', icon: 'pencil' },
+  { id: 'grammar', name: '语法', icon: 'grad' },
+  { id: 'listening', name: '听力', icon: 'headphones' },
+  { id: 'reading', name: '阅读', icon: 'book' },
+  { id: 'wrong', name: '错题', icon: 'wrong' },
 ];
 
 const MEMORY_LEVELS = ['陌生', '初识', '熟悉', '熟练', '精通'];
@@ -103,7 +104,7 @@ export default function English() {
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`tab-btn ${tab === t.id ? 'bg-kid-purple text-white' : 'bg-white text-gray-600'}`}>
-            <span className="icon-tab">{t.icon}</span>{t.name}
+            <Icon name={t.icon} size={20} />{t.name}
           </button>
         ))}
       </div>
@@ -126,12 +127,18 @@ export default function English() {
                 <div className="text-5xl font-bold text-kid-blue mb-2">{curWord.english}</div>
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <span className="text-3xl text-gray-700">{curWord.chinese}</span>
-                  <button onClick={() => speak(curWord.chinese, 'zh-CN')} className="text-kid-green text-xl" title="读中文">🔊</button>
+                  <button onClick={() => speak(curWord.chinese, 'zh-CN')} className="text-kid-green" title="读中文">
+                    <Icon name="speaker" size={22} />
+                  </button>
                 </div>
-                <div className="text-sm text-gray-400 mb-4">👆 中英文对照学习</div>
+                <div className="text-sm text-gray-400 mb-4">中英文对照学习</div>
                 <div className="flex justify-center gap-2">
-                  <button onClick={() => speak(curWord.english, 'en-US')} className="btn-kid bg-kid-blue text-white">🔊 英文</button>
-                  <button onClick={() => { setMode('test'); setTestAnswer(null); }} className="btn-kid bg-kid-green text-white">🎯 选词测试</button>
+                  <button onClick={() => speak(curWord.english, 'en-US')} className="btn-kid bg-kid-blue text-white">
+                    <Icon name="speaker" size={22} />英文
+                  </button>
+                  <button onClick={() => { setMode('test'); setTestAnswer(null); }} className="btn-kid bg-kid-green text-white">
+                    <Icon name="target" size={22} />选词测试
+                  </button>
                 </div>
                 <div className="mt-4 text-sm text-gray-400">{idx + 1} / {words.length}</div>
               </>
@@ -205,7 +212,7 @@ export default function English() {
           </div>
           <div className="text-center my-4">
             <button onClick={() => speak(curListen.content, 'en-US')} className="btn-kid bg-kid-blue text-white text-3xl">
-              🔊 播放听力
+              <Icon name="play" size={26} />播放听力
             </button>
           </div>
           <details className="mb-4">
@@ -262,7 +269,9 @@ export default function English() {
       {/* 错题本 */}
       {tab === 'wrong' && (
         <div className="bg-white rounded-3xl shadow-xl p-5">
-          <h3 className="text-xl font-bold text-gray-800 mb-3">❌ 英语错题本</h3>
+          <h3 className="text-xl font-bold text-gray-800 mb-3 inline-flex items-center gap-2">
+            <Icon name="wrong" size={22} className="text-red-500" />英语错题本
+          </h3>
           {wrongList.length === 0 ? (
             <p className="text-center text-gray-400 py-8">太棒了，暂无错题！继续保持～</p>
           ) : (
@@ -273,7 +282,7 @@ export default function English() {
                   <div className="text-sm space-y-1">
                     <div className="text-red-500">你的答案：{w.user_answer || '未作答'}</div>
                     <div className="text-kid-green">正确答案：{w.correct_answer}</div>
-                    {w.explanation && <div className="text-gray-500">💡 {w.explanation}</div>}
+                    {w.explanation && <div className="text-gray-500 inline-flex items-center gap-1"><Icon name="info" size={14} /> {w.explanation}</div>}
                     <div className="text-gray-400 text-xs mt-1">错了 {w.wrong_count} 次</div>
                   </div>
                 </div>

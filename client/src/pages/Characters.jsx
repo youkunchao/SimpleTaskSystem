@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import api, { speak } from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 const LEVELS = [
   { id: 1, name: 'L1 入门', desc: '简单象形字' },
@@ -10,9 +11,9 @@ const LEVELS = [
 ];
 
 const TABS = [
-  { id: 'learn', name: '汉字', icon: '✍️' },
-  { id: 'reading', name: '阅读', icon: '📖' },
-  { id: 'wrong', name: '错题', icon: '❌' },
+  { id: 'learn', name: '汉字', icon: 'pen' },
+  { id: 'reading', name: '阅读', icon: 'book' },
+  { id: 'wrong', name: '错题', icon: 'wrong' },
 ];
 
 export default function Characters() {
@@ -65,7 +66,7 @@ export default function Characters() {
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`tab-btn ${tab === t.id ? 'bg-kid-orange text-white' : 'bg-white text-gray-600'}`}>
-            <span className="icon-tab">{t.icon}</span>{t.name}
+            <Icon name={t.icon} size={20} />{t.name}
           </button>
         ))}
       </div>
@@ -92,8 +93,12 @@ export default function Characters() {
                   <div className="text-sm text-gray-500">组词</div>
                   <div className="text-lg font-bold text-gray-700">{current.words}</div>
                 </div>
-                <button onClick={() => speak(current.hanzi)} className="btn-kid bg-kid-blue text-white mr-2">🔊 听读音</button>
-                <button onClick={() => { setMode('test'); setTestAnswer(null); }} className="btn-kid bg-kid-green text-white">✏️ 我认识</button>
+                <button onClick={() => speak(current.hanzi)} className="btn-kid bg-kid-blue text-white mr-2">
+                  <Icon name="speaker" size={22} />听读音
+                </button>
+                <button onClick={() => { setMode('test'); setTestAnswer(null); }} className="btn-kid bg-kid-green text-white">
+                  <Icon name="pencil" size={22} />我认识
+                </button>
                 <div className="mt-4 text-sm text-gray-400">{idx + 1} / {chars.length}</div>
               </>
             ) : mode === 'test' ? (
@@ -177,7 +182,9 @@ export default function Characters() {
       {/* 错题本 */}
       {tab === 'wrong' && (
         <div className="bg-white rounded-3xl shadow-xl p-5">
-          <h3 className="text-xl font-bold text-gray-800 mb-3">❌ 汉字错题本</h3>
+          <h3 className="text-xl font-bold text-gray-800 mb-3 inline-flex items-center gap-2">
+            <Icon name="wrong" size={22} className="text-red-500" />汉字错题本
+          </h3>
           {wrongList.length === 0 ? (
             <p className="text-center text-gray-400 py-8">太棒了，暂无错题！</p>
           ) : (

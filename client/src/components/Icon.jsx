@@ -10,7 +10,7 @@ import {
   CheckCircle2, X, AlertCircle, Info, Settings, User, UserPlus,
   Edit, ListChecks, Bell, MapPin, Clock, Play, Pause, ChevronRight,
   Bookmark, Flag, Tag, Image, Camera, Database, Globe, Compass,
-  Droplet, Zap, Award,
+  Droplet, Zap, Lock, Unlock, Eye, EyeOff, Mail, Shapes, Scale,
 } from 'lucide-react';
 
 const map = {
@@ -88,6 +88,13 @@ const map = {
   compass: Compass,
   droplet: Droplet,
   zap: Zap,
+  lock: Lock,
+  unlock: Unlock,
+  eye: Eye,
+  eyeOff: EyeOff,
+  mail: Mail,
+  shapes: Shapes,
+  scale: Scale,
 };
 
 /**

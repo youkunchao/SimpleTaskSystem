@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import api, { speak } from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 export default function Books() {
   const { activeChild } = useAuth();
@@ -25,7 +26,9 @@ export default function Books() {
     const p = currentBook.pages[page];
     return (
       <div className="space-y-4">
-        <button onClick={() => setCurrentBook(null)} className="text-kid-blue font-bold">← 返回书架</button>
+        <button onClick={() => setCurrentBook(null)} className="text-kid-blue font-bold inline-flex items-center gap-1">
+          <Icon name="chevronRight" size={18} className="rotate-180" />返回书架
+        </button>
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-br from-kid-pink/20 to-kid-purple/20 p-8 text-center">
             <div className="text-7xl mb-4 cursor-pointer hover:scale-110 transition" onClick={() => speak(currentBook.title)}>{p.img}</div>
@@ -35,15 +38,17 @@ export default function Books() {
                onClick={() => speak(p.text)}>
               {p.text}
             </p>
-            <p className="text-center text-sm text-gray-400 mt-2">👆 点击文字或图片可朗读</p>
+            <p className="text-center text-sm text-gray-400 mt-2">点击文字或图片可朗读</p>
           </div>
         </div>
         <div className="flex justify-between items-center">
           <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}
-            className="btn-kid bg-gray-300 text-white disabled:opacity-30">← 上一页</button>
+            className="btn-kid bg-gray-300 text-white disabled:opacity-30">
+            <Icon name="chevronRight" size={18} className="rotate-180" />上一页
+          </button>
           <span className="text-lg font-bold text-gray-600">{page + 1} / {currentBook.pages.length}</span>
           <button onClick={() => setPage(Math.min(currentBook.pages.length - 1, page + 1))} disabled={page === currentBook.pages.length - 1}
-            className="btn-kid bg-kid-pink text-white disabled:opacity-30">下一页 →</button>
+            className="btn-kid bg-kid-pink text-white disabled:opacity-30">下一页 <Icon name="chevronRight" size={18} /></button>
         </div>
       </div>
     );
@@ -51,7 +56,9 @@ export default function Books() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-gray-800">📚 绘本书架</h2>
+      <h2 className="text-2xl font-bold text-gray-800 inline-flex items-center gap-2">
+        <Icon name="book" size={26} className="text-kid-purple" />绘本书架
+      </h2>
       <div className="grid grid-cols-2 gap-4">
         {books.map(b => (
           <button key={b.id} onClick={() => openBook(b.id)}

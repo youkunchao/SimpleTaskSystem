@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import api from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 const TYPES = [
-  { id: 'compare', name: '比大小', icon: '⚖️' },
-  { id: 'arithmetic', name: '加减法', icon: '➕' },
-  { id: 'shape', name: '认图形', icon: '🔷' },
+  { id: 'compare', name: '比大小', icon: 'scale' },
+  { id: 'arithmetic', name: '加减法', icon: 'calculator' },
+  { id: 'shape', name: '认图形', icon: 'shapes' },
 ];
 
 export default function MathGame() {
@@ -52,21 +53,23 @@ export default function MathGame() {
       <div className="flex gap-2 overflow-x-auto pb-2">
         {TYPES.map(t => (
           <button key={t.id} onClick={() => setType(t.id)}
-            className={`px-4 py-2 rounded-2xl font-bold whitespace-nowrap ${type === t.id ? 'bg-kid-green text-white' : 'bg-white text-gray-600'}`}>
-            {t.icon} {t.name}
+            className={`tab-btn ${type === t.id ? 'bg-kid-green text-white' : 'bg-white text-gray-600'}`}>
+            <Icon name={t.icon} size={20} />{t.name}
           </button>
         ))}
       </div>
 
       <div className="bg-white rounded-3xl shadow-xl p-6 text-center">
         <div className="flex justify-between mb-4">
-          <span className="text-lg font-bold text-kid-orange">得分: {score} ⭐</span>
+          <span className="text-lg font-bold text-kid-orange inline-flex items-center gap-1">
+            得分: {score} <Icon name="star" size={18} />
+          </span>
           <span className="text-lg text-gray-500">{idx + 1}/{problems.length}</span>
         </div>
 
         {feedback === 'done' ? (
           <div className="py-8">
-            <div className="text-6xl mb-3">🏆</div>
+            <div className="text-6xl mb-3"><Icon name="trophy" size={60} className="mx-auto text-kid-orange" /></div>
             <h2 className="text-2xl font-bold text-kid-green mb-2">游戏结束！</h2>
             <p className="text-xl text-gray-600">你答对了 {score} / {problems.length} 题</p>
             <button onClick={() => { setIdx(0); setScore(0); setAnswered(false); setFeedback(null); }}

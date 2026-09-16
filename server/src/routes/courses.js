@@ -7,10 +7,10 @@ const router = Router();
 router.get('/', (req, res) => {
   res.json({
     modules: [
-      { id: 'characters', name: '汉字认知', icon: '✍️', desc: '看图识字，快乐学汉字', levels: 4 },
-      { id: 'english', name: '英语启蒙', icon: '🔤', desc: '趣味单词，开口说英语', levels: 5 },
-      { id: 'math', name: '数学思维', icon: '🔢', desc: '边玩边学，培养数感', levels: 3 },
-      { id: 'books', name: '绘本点读', icon: '📚', desc: '点读绘本，爱上阅读', levels: 2 },
+      { id: 'characters', name: '汉字认知', icon: 'pen', desc: '看图识字，快乐学汉字', levels: 4 },
+      { id: 'english', name: '英语启蒙', icon: 'pencil', desc: '趣味单词，开口说英语', levels: 5 },
+      { id: 'math', name: '数学思维', icon: 'calculator', desc: '边玩边学，培养数感', levels: 3 },
+      { id: 'books', name: '绘本点读', icon: 'book', desc: '点读绘本，爱上阅读', levels: 2 },
     ],
   });
 });

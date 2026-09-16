@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import api from '../api.js';
+import Icon from '../components/Icon.jsx';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const COLORS = ['#FF8C42', '#60A5FA', '#34D399', '#A78BFA', '#FF6B9D'];
@@ -24,7 +25,9 @@ export default function Progress() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-2xl font-bold text-gray-800">📊 学习进度</h2>
+      <h2 className="text-2xl font-bold text-gray-800 inline-flex items-center gap-2">
+        <Icon name="chart" size={26} className="text-kid-blue" />学习进度
+      </h2>
 
       {/* 总览 */}
       <div className="grid grid-cols-3 gap-3">
@@ -87,7 +90,9 @@ export default function Progress() {
 
       {/* 五级记忆分布 */}
       <div className="bg-white rounded-3xl shadow-lg p-5">
-        <h3 className="text-lg font-bold mb-3">🧠 艾宾浩斯记忆分布</h3>
+        <h3 className="text-lg font-bold mb-3 inline-flex items-center gap-2">
+          <Icon name="brain" size={20} className="text-kid-purple" />艾宾浩斯记忆分布
+        </h3>
         <div className="grid grid-cols-5 gap-2">
           {data.memoryDistribution?.map((m, i) => (
             <div key={i} className={`rounded-2xl p-3 text-center ${['bg-red-50', 'bg-orange-50', 'bg-yellow-50', 'bg-green-50', 'bg-blue-50'][i]}`}>
@@ -101,7 +106,9 @@ export default function Progress() {
 
       {/* 错题统计 */}
       <div className="bg-white rounded-3xl shadow-lg p-5">
-        <h3 className="text-lg font-bold mb-3">❌ 错题统计</h3>
+        <h3 className="text-lg font-bold mb-3 inline-flex items-center gap-2">
+          <Icon name="wrong" size={20} className="text-red-500" />错题统计
+        </h3>
         {!data.wrongStats || data.wrongStats.length === 0 ? (
           <p className="text-center text-gray-400 py-6">暂无错题，继续保持！</p>
         ) : (

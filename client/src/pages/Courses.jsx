@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import api from '../api.js';
+import Icon from '../components/Icon.jsx';
 
 export default function Courses() {
   const { children, setChildren, activeChild, switchChild } = useAuth();
@@ -54,8 +55,12 @@ export default function Courses() {
       {/* 孩子管理区 */}
       <div className="bg-white rounded-3xl shadow-lg p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-800">👨‍👩‍👧‍👦 我的孩子</h2>
-          <button onClick={() => setShowAdd(true)} className="bg-kid-green text-white px-4 py-2 rounded-full font-bold">+ 添加</button>
+          <h2 className="text-2xl font-bold text-gray-800 inline-flex items-center gap-2">
+            <Icon name="users" size={26} className="text-kid-pink" />我的孩子
+          </h2>
+          <button onClick={() => setShowAdd(true)} className="bg-kid-green text-white px-4 py-2 rounded-full font-bold inline-flex items-center gap-1">
+            <Icon name="plus" size={18} />添加
+          </button>
         </div>
         {children.length === 0 ? (
           <p className="text-gray-400 text-center py-6">还没有添加孩子，点击"添加"开始吧！</p>
@@ -69,7 +74,9 @@ export default function Courses() {
                 <div className="font-bold text-lg">{c.name}</div>
                 <div className="text-sm text-gray-500">{c.age}岁</div>
                 <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }}
-                  className="text-xs text-red-400 mt-1">删除</button>
+                  className="text-xs text-red-400 mt-1 inline-flex items-center gap-1">
+                  <Icon name="trash" size={12} />删除
+                </button>
               </div>
             ))}
           </div>
@@ -107,7 +114,9 @@ export default function Courses() {
 
       {/* 课程模块 */}
       <div className="bg-white rounded-3xl shadow-lg p-5">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">🎯 学习模块</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4 inline-flex items-center gap-2">
+          <Icon name="target" size={26} className="text-kid-purple" />学习模块
+        </h2>
         {!activeChild ? (
           <p className="text-gray-400 text-center py-6">请先添加并选择一个孩子</p>
         ) : (
@@ -115,7 +124,7 @@ export default function Courses() {
             {modules.map(m => (
               <button key={m.id} onClick={() => navigate(`/${m.id}`)}
                 className={`bg-gradient-to-br ${moduleColors[m.id]} text-white rounded-3xl p-5 text-left shadow-lg hover:scale-105 transition`}>
-                <div className="text-5xl mb-2">{m.icon}</div>
+                <div className="mb-2"><Icon name={m.icon} size={42} /></div>
                 <div className="text-xl font-bold">{m.name}</div>
                 <div className="text-sm opacity-90">{m.desc}</div>
                 <div className="text-xs mt-2 opacity-80">{m.levels}个级别</div>
