@@ -40,7 +40,9 @@ function Layout({ children }) {
           </h1>
           {activeChild ? (
             <div className="flex items-center gap-2">
-              <span className="text-3xl">{activeChild.avatar}</span>
+              <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-kid-orange/10">
+                <Icon name={activeChild.avatar} size={22} className="text-kid-orange" />
+              </span>
               <span className="text-lg font-bold text-gray-700">{activeChild.name}</span>
               <button onClick={() => navigate('/courses')} className="text-sm bg-kid-blue text-white px-3 py-1 rounded-full">切换</button>
             </div>

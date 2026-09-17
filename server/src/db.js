@@ -293,8 +293,9 @@ function seed() {
   for (let i = 0; i < 15; i++) {
     const a = Math.floor(Math.random() * 20) + 1;
     const b = Math.floor(Math.random() * 20) + 1;
-    const answer = a > b ? 1 : (a < b ? 2 : 0);
-    if (answer !== 0) {
+    // options: ['>', '<'] 索引 0 = '>', 1 = '<'
+    const answer = a > b ? 0 : (a < b ? 1 : -1);
+    if (answer >= 0) {
       mathData.push({ type: 'compare', question: `${a} ? ${b}`, options: JSON.stringify(['>', '<']), answer, level: 1 });
     }
   }

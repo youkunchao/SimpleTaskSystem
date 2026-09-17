@@ -11,8 +11,8 @@ export default function Courses() {
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
   const [newAge, setNewAge] = useState(5);
-  const [newAvatar, setNewAvatar] = useState('🦊');
-  const avatars = ['🦊', '🐻', '🐰', '🐱', '🐶', '🦁', '🐼', '🐸'];
+  const [newAvatar, setNewAvatar] = useState('cat');
+  const avatars = ['cat', 'dog', 'rabbit', 'panda', 'paw', 'bear', 'smile', 'heart'];
 
   useEffect(() => {
     api.get('/courses').then(res => setModules(res.data.modules)).catch(() => {});
@@ -70,7 +70,9 @@ export default function Courses() {
               <div key={c.id} className={`p-4 rounded-2xl border-4 text-center cursor-pointer transition ${
                 activeChild?.id === c.id ? 'border-kid-orange bg-kid-yellow/20' : 'border-transparent bg-gray-50 hover:bg-gray-100'
               }`} onClick={() => switchChild(c)}>
-                <div className="text-5xl mb-1">{c.avatar}</div>
+                <div className="mb-1 inline-flex items-center justify-center w-14 h-14 rounded-full bg-kid-orange/10">
+                  <Icon name={c.avatar} size={36} className="text-kid-orange" />
+                </div>
                 <div className="font-bold text-lg">{c.name}</div>
                 <div className="text-sm text-gray-500">{c.age}岁</div>
                 <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }}
@@ -100,7 +102,9 @@ export default function Courses() {
               <div className="flex flex-wrap gap-2">
                 {avatars.map(a => (
                   <button key={a} onClick={() => setNewAvatar(a)}
-                    className={`text-3xl p-2 rounded-xl ${newAvatar === a ? 'bg-kid-yellow' : 'bg-gray-100'}`}>{a}</button>
+                    className={`p-2 rounded-xl inline-flex items-center justify-center w-12 h-12 ${newAvatar === a ? 'bg-kid-yellow' : 'bg-gray-100'}`}>
+                    <Icon name={a} size={28} className={newAvatar === a ? 'text-kid-orange' : 'text-gray-500'} />
+                  </button>
                 ))}
               </div>
             </div>

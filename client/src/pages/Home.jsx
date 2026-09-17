@@ -41,7 +41,9 @@ export default function Home() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold inline-flex items-center gap-2">
-              <span>{activeChild.avatar}</span>{activeChild.name}，你好！
+              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/20">
+                <Icon name={activeChild.avatar} size={24} className="text-white" />
+              </span>{activeChild.name}，你好！
             </h2>
             <p className="opacity-90 mt-1">今天也要加油学习哦～</p>
           </div>
