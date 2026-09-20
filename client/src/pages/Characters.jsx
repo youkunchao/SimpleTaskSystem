@@ -1,34 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import api, { speak } from '../api.js';
+import { useNavigate } from 'react-router-dom';
+import api from '../api.js';
 import Icon from '../components/Icon.jsx';
+import AudioReader from '../components/AudioReader.jsx';
+import HanziStudy from '../components/HanziStudy.jsx';
+import HanziMap from '../components/HanziMap.jsx';
+import { useQuiz } from '../hooks/useQuiz.js';
 
-const LEVELS = [
-  { id: 1, name: 'L1 入门', desc: '简单象形字' },
-  { id: 2, name: 'L2 基础', desc: '常用基础字' },
-  { id: 3, name: 'L3 进阶', desc: '家人与情感' },
-  { id: 4, name: 'L4 提高', desc: '学习与生活' },
-];
+// 错题本需要覆盖汉字下的所有子模块
+const WRONG_MODULES = 'characters,chinese-reading';
+// 汉字地图不再分关：一条连续轨道展示全部汉字，靠懒加载渲染
+const LEARN_SCOPE = 'all';
 
-const TABS = [
-  { id: 'learn', name: '汉字', icon: 'pen' },
-  { id: 'reading', name: '阅读', icon: 'book' },
-  { id: 'wrong', name: '错题', icon: 'wrong' },
-];
+function DoneCard({ onRestart }) {
+  return (
+    <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
+      <div className="text-6xl mb-3">🎊</div>
+      <h2 className="text-2xl font-bold text-kid-orange mb-4">本级完成！</h2>
+      <button onClick={onRestart} className="btn-kid bg-kid-blue text-white">再来一遍</button>
+    </div>
+  );
+}
+
+// 阅读 / 错题等子页面的返回头
+function SubHeader({ title, icon, onBack }) {
+  return (
+    <div className="flex items-center gap-2 mb-1">
+      <button onClick={onBack} className="w-10 h-10 rounded-2xl bg-white shadow flex items-center justify-center active:scale-90" title="返回地图">
+        <Icon name="back" size={20} className="text-gray-600" />
+      </button>
+      <h3 className="text-lg font-bold text-gray-800 inline-flex items-center gap-2">
+        <Icon name={icon} size={22} className="text-kid-orange" />{title}
+      </h3>
+    </div>
+  );
+}
 
 export default function Characters() {
   const { activeChild } = useAuth();
-  const [tab, setTab] = useState('learn');
-  const [level, setLevel] = useState(1);
+  const navigate = useNavigate();
   const [chars, setChars] = useState([]);
   const [readings, setReadings] = useState([]);
   const [wrongList, setWrongList] = useState([]);
-  const [idx, setIdx] = useState(0);
-  const [mode, setMode] = useState('learn');
-  const [testAnswer, setTestAnswer] = useState(null);
+  // 五步学习：当前学到第几个字、是否学完
+  const [studyIdx, setStudyIdx] = useState(0);
+  const [studyDone, setStudyDone] = useState(false);
+  // map = 地图选字；study = 五步学习；library = 字库；reading = 中文阅读；wrong = 错题本
+  const [view, setView] = useState('map');
+  // 答题节奏统一由 useQuiz 控制：答对自动推进，答错停下等孩子决定
+  const quiz = useQuiz({ resetKey: view === 'reading' ? 'reading' : 'learn', initialMode: 'learn' });
+  const { idx, mode, testAnswer } = quiz;
 
+  // 上报答题结果；答题节奏由 useQuiz 控制，这里不碰作答状态
   const submitAnswer = async (module, item, correct, question, userAns, correctAns, explanation) => {
-    setTestAnswer(correct);
     try {
       await api.post('/progress', {
         child_id: activeChild.id, module, item_id: item.id, correct, duration: 10,
@@ -37,154 +62,120 @@ export default function Characters() {
     } catch (e) {}
   };
 
-  useEffect(() => { setIdx(0); setMode('learn'); setTestAnswer(null); }, [tab, level]);
+  // 答对自动推进，答错停下来等孩子选择
+  const handleAnswer = (module, item, isRight, hasLearnMode, listLength, nextMode, question, userAns, correctAns, explanation) => {
+    submitAnswer(module, item, isRight, question, userAns, correctAns, explanation);
+    if (isRight) quiz.markCorrect(listLength, nextMode);
+    else quiz.markWrong(hasLearnMode);
+  };
 
+  // 一次性加载全部汉字（不分关），地图靠懒加载渲染，1000 字也不卡
   useEffect(() => {
     if (!activeChild) return;
-    api.get(`/courses/characters?level=${level}`).then(r => setChars(r.data)).catch(() => {});
-  }, [level, activeChild]);
+    api.get('/courses/characters').then(r => setChars(r.data)).catch(() => {});
+  }, [activeChild]);
 
+  // 中文阅读理解
   useEffect(() => {
-    if (!activeChild || tab !== 'reading') return;
+    if (!activeChild || view !== 'reading') return;
     api.get('/courses/chinese-reading').then(r => setReadings(r.data)).catch(() => {});
-  }, [tab, activeChild]);
+  }, [view, activeChild]);
 
+  // 错题本
   useEffect(() => {
-    if (!activeChild || tab !== 'wrong') return;
-    api.get(`/progress/wrong/${activeChild.id}?module=characters`).then(r => setWrongList(r.data)).catch(() => {});
-  }, [tab, activeChild]);
+    if (!activeChild || view !== 'wrong') return;
+    api.get(`/progress/wrong/${activeChild.id}`, { params: { module: WRONG_MODULES } })
+      .then(r => setWrongList(r.data)).catch(() => {});
+  }, [view, activeChild]);
+
+  const studyChar = chars[studyIdx];
+  const curRead = readings[idx];
+
+  // 五步学习选项：每次换字洗牌一次（从全部汉字里取 4 个）
+  const charOptions = useMemo(() => {
+    if (!studyChar || chars.length < 2) return [];
+    const others = chars.filter(c => c.id !== studyChar.id).sort(() => Math.random() - 0.5).slice(0, 3);
+    return [...others, studyChar].sort(() => Math.random() - 0.5);
+  }, [chars, studyChar?.id]);
+
+  const readOptions = useMemo(() => (curRead ? JSON.parse(curRead.options) : []), [curRead]);
+
+  // 断点续学：进入时恢复上次学到的第几个字
+  const [posReady, setPosReady] = useState(false);
+  const readyScopeRef = useRef('');
+  useEffect(() => {
+    if (!activeChild || chars.length === 0) return;
+    setPosReady(false);
+    readyScopeRef.current = '';
+    api.get(`/learning/${activeChild.id}`, { params: { module: 'characters', scope: LEARN_SCOPE } })
+      .then(r => {
+        const pos = Number(r.data?.position || 0);
+        if (pos > 0 && pos < chars.length) setStudyIdx(pos);
+        readyScopeRef.current = LEARN_SCOPE;
+        setPosReady(true);
+      })
+      .catch(() => { readyScopeRef.current = LEARN_SCOPE; setPosReady(true); });
+  }, [activeChild, chars.length]);
+
+  // 位置推进时保存，下次进来接着学
+  useEffect(() => {
+    if (!activeChild || !posReady) return;
+    if (readyScopeRef.current !== LEARN_SCOPE) return;
+    api.put('/learning', { child_id: activeChild.id, module: 'characters', scope: LEARN_SCOPE, position: studyIdx })
+      .catch(() => {});
+  }, [studyIdx, posReady, activeChild]);
 
   if (!activeChild) return <p className="text-center text-gray-400 py-10">请先选择孩子</p>;
 
-  const current = chars[idx];
-  const curRead = readings[idx];
-
-  return (
-    <div className="space-y-5">
-      {/* Tab 导航 */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`tab-btn ${tab === t.id ? 'bg-kid-orange text-white' : 'bg-white text-gray-600'}`}>
-            <Icon name={t.icon} size={20} />{t.name}
-          </button>
-        ))}
-      </div>
-
-      {/* 汉字认知 */}
-      {tab === 'learn' && chars.length > 0 && current && (
-        <>
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {LEVELS.map(l => (
-              <button key={l.id} onClick={() => setLevel(l.id)}
-                className={`tab-btn ${level === l.id ? 'bg-kid-orange text-white' : 'bg-white text-gray-600'}`}>
-                {l.name}
-              </button>
-            ))}
-          </div>
-          <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
-            {mode === 'learn' ? (
-              <>
-                <div className="text-8xl mb-3">{current.emoji}</div>
-                <div className="text-7xl font-bold text-kid-orange mb-2" style={{ textShadow: '3px 3px 0 #FFE4B5' }}>{current.hanzi}</div>
-                <div className="text-2xl text-gray-600 mb-1">{current.pinyin}</div>
-                <div className="text-xl text-gray-500 mb-4">{current.meaning}</div>
-                <div className="bg-kid-yellow/20 rounded-2xl p-3 mb-4">
-                  <div className="text-sm text-gray-500">组词</div>
-                  <div className="text-lg font-bold text-gray-700">{current.words}</div>
+  // 中文阅读理解
+  if (view === 'reading') {
+    return (
+      <div className="p-4 space-y-4">
+        <SubHeader title="中文阅读" icon="bookText" onBack={() => setView('map')} />
+        {mode === 'done' ? (
+          <DoneCard onRestart={() => quiz.restart('test')} />
+        ) : curRead && (
+          <div className="bg-white rounded-3xl shadow-xl p-6">
+            <div className="flex justify-between mb-3">
+              <span className="bg-kid-orange/10 text-kid-orange px-3 py-1 rounded-full text-sm font-bold">L{curRead.level} 阅读</span>
+              <span className="text-sm text-gray-400">{idx + 1}/{readings.length}</span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-3">{curRead.title}</h3>
+            <AudioReader
+              passage={curRead.content}
+              question={curRead.question}
+              options={readOptions}
+              lang="zh-CN"
+              correctIndex={curRead.answer}
+              status={testAnswer}
+              disabled={testAnswer !== null}
+              onSelect={(i) => handleAnswer('chinese-reading', curRead, i === curRead.answer, false, readings.length, 'test', curRead.question, readOptions[i], readOptions[curRead.answer], '')}
+              footer={testAnswer === true ? (
+                <div className="text-xl font-bold text-center mt-4 text-kid-green">
+                  🎉 答对了！<span className="text-kid-yellow">+2 ⭐</span>
                 </div>
-                <button onClick={() => speak(current.hanzi)} className="btn-kid bg-kid-blue text-white mr-2">
-                  <Icon name="speaker" size={22} />听读音
-                </button>
-                <button onClick={() => { setMode('test'); setTestAnswer(null); }} className="btn-kid bg-kid-green text-white">
-                  <Icon name="pencil" size={22} />我认识
-                </button>
-                <div className="mt-4 text-sm text-gray-400">{idx + 1} / {chars.length}</div>
-              </>
-            ) : mode === 'test' ? (
-              <>
-                <div className="text-6xl mb-3">{current.emoji}</div>
-                <div className="text-2xl text-gray-600 mb-2">{current.pinyin}</div>
-                <div className="text-lg text-gray-500 mb-6">这是哪个字？</div>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {[...chars.filter(c => c.id !== current.id).slice(0, 3), current].sort(() => Math.random() - 0.5).map((opt, i) => (
-                    <button key={i} onClick={() => {
-                      const correct = opt.id === current.id;
-                      submitAnswer('characters', current, correct, current.pinyin, opt.hanzi, current.hanzi, '');
-                      setTimeout(() => {
-                        if (idx < chars.length - 1) { setIdx(idx + 1); setMode('learn'); setTestAnswer(null); }
-                        else setMode('done');
-                      }, 800);
-                    }} disabled={testAnswer !== null}
-                      className={`p-6 text-5xl font-bold rounded-2xl border-4 transition ${
-                        testAnswer === null ? 'bg-gray-50 border-gray-200 hover:border-kid-blue' :
-                        opt.id === current.id ? 'bg-kid-green/30 border-kid-green' : 'bg-red-100 border-red-300'
-                      }`}>{opt.hanzi}</button>
-                  ))}
-                </div>
-                {testAnswer !== null && (
-                  <div className={`text-2xl font-bold ${testAnswer ? 'text-kid-green' : 'text-red-500'}`}>
-                    {testAnswer ? '🎉 太棒了！' : `❌ 正确答案是「${current.hanzi}」`}
+              ) : testAnswer === false ? (
+                <div className="mt-4 space-y-3">
+                  <div className="text-xl font-bold text-center text-red-500">❌ 正确答案：{readOptions[curRead.answer]}</div>
+                  <div className="flex gap-2 justify-center">
+                    <button onClick={quiz.retry} className="btn-kid bg-kid-yellow text-white">再试一次</button>
+                    <button onClick={() => quiz.goNext(readings.length, 'test')} className="btn-kid bg-kid-blue text-white">下一题</button>
                   </div>
-                )}
-              </>
-            ) : (
-              <div className="py-8">
-                <div className="text-6xl mb-3">🎊</div>
-                <h2 className="text-2xl font-bold text-kid-orange mb-4">本级完成！</h2>
-                <p className="text-gray-500 mb-4">你已经学习了 {chars.length} 个汉字</p>
-                <button onClick={() => { setIdx(0); setMode('learn'); }} className="btn-kid bg-kid-blue text-white">再来一遍</button>
-              </div>
-            )}
+                </div>
+              ) : null}
+            />
           </div>
-        </>
-      )}
+        )}
+      </div>
+    );
+  }
 
-      {/* 中文阅读理解 */}
-      {tab === 'reading' && readings.length > 0 && curRead && (
-        <div className="bg-white rounded-3xl shadow-xl p-6">
-          <div className="flex justify-between mb-3">
-            <span className="bg-kid-orange/10 text-kid-orange px-3 py-1 rounded-full text-sm font-bold">L{curRead.level} 阅读</span>
-            <span className="text-sm text-gray-400">{idx + 1}/{readings.length}</span>
-          </div>
-          <h3 className="text-xl font-bold text-gray-800 mb-3">{curRead.title}</h3>
-          <p className="text-gray-700 leading-relaxed p-4 bg-gray-50 rounded-2xl mb-4 text-lg">{curRead.content}</p>
-          <div className="text-lg font-bold text-gray-800 mb-4">{curRead.question}</div>
-          <div className="space-y-3">
-            {JSON.parse(curRead.options).map((opt, i) => (
-              <button key={i} onClick={() => {
-                const correct = i === curRead.answer;
-                submitAnswer('reading', curRead, correct, curRead.question, opt, JSON.parse(curRead.options)[curRead.answer], '');
-                setTimeout(() => {
-                  if (idx < readings.length - 1) { setIdx(idx + 1); setTestAnswer(null); }
-                  else setMode('done');
-                }, 800);
-              }} disabled={testAnswer !== null}
-                className={`w-full p-4 text-lg font-bold rounded-2xl border-4 transition text-left ${
-                  testAnswer === null ? 'bg-gray-50 border-gray-200 hover:border-kid-orange' :
-                  i === curRead.answer ? 'bg-kid-green/30 border-kid-green' : 'bg-red-100 border-red-300'
-                }`}>{String.fromCharCode(65 + i)}. {opt}</button>
-            ))}
-          </div>
-          {testAnswer !== null && (
-            <div className={`text-xl font-bold text-center mt-4 ${testAnswer ? 'text-kid-green' : 'text-red-500'}`}>
-              {testAnswer ? '🎉 答对了！' : `❌ 正确答案：${JSON.parse(curRead.options)[curRead.answer]}`}
-            </div>
-          )}
-          {mode === 'done' && (
-            <div className="text-center mt-4">
-              <button onClick={() => { setIdx(0); setMode('learn'); setTestAnswer(null); }} className="btn-kid bg-kid-orange text-white">再来一遍</button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 错题本 */}
-      {tab === 'wrong' && (
+  // 错题本
+  if (view === 'wrong') {
+    return (
+      <div className="p-4 space-y-4">
+        <SubHeader title="汉字错题本" icon="wrong" onBack={() => setView('map')} />
         <div className="bg-white rounded-3xl shadow-xl p-5">
-          <h3 className="text-xl font-bold text-gray-800 mb-3 inline-flex items-center gap-2">
-            <Icon name="wrong" size={22} className="text-red-500" />汉字错题本
-          </h3>
           {wrongList.length === 0 ? (
             <p className="text-center text-gray-400 py-8">太棒了，暂无错题！</p>
           ) : (
@@ -202,6 +193,68 @@ export default function Characters() {
             </div>
           )}
         </div>
+      </div>
+    );
+  }
+
+  // 字库
+  if (view === 'library') {
+    return (
+      <div className="p-4 space-y-4">
+        <SubHeader title="字库" icon="listChecks" onBack={() => setView('map')} />
+        <div className="bg-white rounded-3xl shadow-xl p-4">
+          <div className="grid grid-cols-5 gap-2">
+            {chars.map((c, i) => (
+              <button key={c.id} onClick={() => { setStudyIdx(i); setStudyDone(false); setView('study'); }}
+                className={`flex flex-col items-center py-1.5 rounded-xl border-2 transition active:scale-95 ${
+                  i < studyIdx ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-gray-50'
+                }`}>
+                <span className="text-2xl font-bold text-gray-700">{c.hanzi}</span>
+                <span className="text-[10px] text-gray-400">{c.pinyin}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 五步学习
+  if (view === 'study' && studyChar) {
+    return (
+      <HanziStudy
+        char={studyChar}
+        charOptions={charOptions.map(o => o.hanzi)}
+        correctIndex={charOptions.findIndex(o => o.id === studyChar.id)}
+        index={studyIdx}
+        total={chars.length}
+        onSubmit={(ok, userAns, correctAns) => submitAnswer('characters', studyChar, ok, studyChar.pinyin, userAns, correctAns, '')}
+        onNext={() => { if (studyIdx < chars.length - 1) setStudyIdx(studyIdx + 1); else setStudyDone(true); }}
+        onRestart={() => { setStudyIdx(0); setStudyDone(false); setView('map'); }}
+        onBack={() => setView('map')}
+        done={studyDone}
+      />
+    );
+  }
+
+  // 首页：卡通闯关地图（横屏左右拖动 / 竖屏上下拖动，懒加载）
+  return (
+    <div className="space-y-5">
+      {!chars.length ? (
+        <p className="text-center text-gray-400 py-10">加载中...</p>
+      ) : (
+        <HanziMap
+          chars={chars}
+          currentIdx={studyIdx}
+          child={activeChild}
+          onPick={(i) => { setStudyIdx(i); setStudyDone(false); setView('study'); }}
+          onBack={() => navigate('/courses')}
+          onSettings={() => navigate('/settings')}
+          onBooks={() => navigate('/books')}
+          onReading={() => setView('reading')}
+          onReview={() => setView('wrong')}
+          onLibrary={() => setView('library')}
+        />
       )}
     </div>
   );

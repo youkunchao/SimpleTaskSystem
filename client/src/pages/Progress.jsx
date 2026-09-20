@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import api from '../api.js';
 import Icon from '../components/Icon.jsx';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { MODULE_LABELS } from '../utils/review.js';
 
 const COLORS = ['#FF8C42', '#60A5FA', '#34D399', '#A78BFA', '#FF6B9D'];
 
@@ -19,7 +20,8 @@ export default function Progress() {
   if (!activeChild) return <p className="text-center text-gray-400 py-10">请先选择孩子</p>;
   if (!data) return <p className="text-center text-gray-400 py-10">加载中...</p>;
 
-  const moduleName = { characters: '汉字', english: '英语', math: '数学', books: '绘本', grammar: '语法', listening: '听力', reading: '阅读' };
+  // 与复习列表共用同一份模块名映射，避免出现 chinese-reading 这种原始 key
+  const moduleName = MODULE_LABELS;
 
   const pieData = data.byModule.map(m => ({ name: moduleName[m.module] || m.module, value: m.count }));
 

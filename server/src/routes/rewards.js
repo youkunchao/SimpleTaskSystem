@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import db from '../db.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { nowLocal } from '../time.js';
 
 const router = Router();
 router.use(authMiddleware);
@@ -39,7 +40,7 @@ router.get('/:child_id', (req, res) => {
       if (b.name.includes('坚持') && reward.streak >= 7) achieved = true;
       if (b.name.includes('识字') && charMastered >= 20) achieved = true;
       if (achieved) {
-        db.prepare('INSERT OR IGNORE INTO child_badges (child_id, badge_id) VALUES (?, ?)').run(req.params.child_id, b.id);
+        db.prepare('INSERT OR IGNORE INTO child_badges (child_id, badge_id, unlocked_at) VALUES (?, ?, ?)').run(req.params.child_id, b.id, nowLocal());
         isUnlocked = true;
       }
     }

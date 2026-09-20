@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import db from '../db.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { nowLocal, todayLocal, addDaysLocal } from '../time.js';
 
 const router = Router();
 router.use(authMiddleware);
@@ -14,16 +15,38 @@ function verifyChild(childId, userId) {
   return db.prepare('SELECT * FROM children WHERE id = ? AND user_id = ?').get(childId, userId);
 }
 
+// 复习项对应的内容表，用于附带详情
+const DETAIL_MAP = {
+  characters: { table: 'characters', cols: 'hanzi, pinyin, emoji, meaning' },
+  english: { table: 'words', cols: 'english, chinese, emoji' },
+  math: { table: 'math_problems', cols: 'question, options' },
+  grammar: { table: 'grammar_problems', cols: 'question, options, explanation' },
+  listening: { table: 'listening_materials', cols: 'title, content, question' },
+  reading: { table: 'reading_materials', cols: 'title, passage, question' },
+  'chinese-reading': { table: 'chinese_readings', cols: 'title, content, question' },
+  books: { table: 'picture_books', cols: 'title, cover' },
+};
+
+function fetchDetail(module, itemId) {
+  const conf = DETAIL_MAP[module];
+  if (!conf) return null;
+  try {
+    return db.prepare(`SELECT ${conf.cols} FROM ${conf.table} WHERE id = ?`).get(itemId) || null;
+  } catch {
+    return null;
+  }
+}
+
 // 记录错题
 function recordWrongQuestion(childId, module, itemId, question, userAnswer, correctAnswer, explanation) {
   const existing = db.prepare('SELECT * FROM wrong_questions WHERE child_id = ? AND module = ? AND item_id = ?')
     .get(childId, module, itemId);
   if (existing) {
-    db.prepare('UPDATE wrong_questions SET wrong_count = wrong_count + 1, last_wrong_at = datetime(\'now\'), user_answer = ?, mastered = 0 WHERE id = ?')
-      .run(userAnswer, existing.id);
+    db.prepare('UPDATE wrong_questions SET wrong_count = wrong_count + 1, last_wrong_at = ?, user_answer = ?, mastered = 0 WHERE id = ?')
+      .run(nowLocal(), userAnswer, existing.id);
   } else {
-    db.prepare('INSERT INTO wrong_questions (child_id, module, item_id, question, user_answer, correct_answer, explanation) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run(childId, module, itemId, question, userAnswer, correctAnswer, explanation || '');
+    db.prepare('INSERT INTO wrong_questions (child_id, module, item_id, question, user_answer, correct_answer, explanation, created_at, last_wrong_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(childId, module, itemId, question, userAnswer, correctAnswer, explanation || '', nowLocal(), nowLocal());
   }
 }
 
@@ -36,17 +59,21 @@ function markWrongMastered(childId, module, itemId) {
 // 记录学习进度
 router.post('/', (req, res) => {
   const { child_id, module, item_id, correct, duration, question, user_answer, correct_answer, explanation } = req.body;
+  // 显式校验参数：缺失时返回 400，而不是流到 SQL 绑定阶段变成 500
+  if (!child_id || !module || item_id === undefined || item_id === null) {
+    return res.status(400).json({ error: 'child_id、module、item_id 不能为空' });
+  }
   if (!verifyChild(child_id, req.userId)) {
     return res.status(403).json({ error: '无权操作' });
   }
-  db.prepare('INSERT INTO progress (child_id, module, item_id, correct, duration) VALUES (?, ?, ?, ?, ?)')
-    .run(child_id, module, item_id, correct ? 1 : 0, duration || 0);
+  db.prepare('INSERT INTO progress (child_id, module, item_id, correct, duration, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(child_id, module, item_id, correct ? 1 : 0, duration || 0, nowLocal());
 
   // 更新或创建复习项（五级记忆）
   const existing = db.prepare('SELECT * FROM review_items WHERE child_id = ? AND module = ? AND item_id = ?')
     .get(child_id, module, item_id);
 
-  const today = new Date();
+  const now = nowLocal();
   if (existing) {
     let newLevel = existing.interval_level;
     if (correct) {
@@ -57,14 +84,14 @@ router.post('/', (req, res) => {
       newLevel = 0; // 答错重置为陌生
       recordWrongQuestion(child_id, module, item_id, question || '', user_answer || '', correct_answer || '', explanation || '');
     }
-    const days = INTERVALS[newLevel];
-    const next = new Date(today.getTime() + days * 24 * 60 * 60 * 1000);
-    db.prepare('UPDATE review_items SET interval_level = ?, next_review = ?, last_review = datetime(\'now\') WHERE id = ?')
-      .run(newLevel, next.toISOString(), existing.id);
+    // 答错立刻回到复习队列（趁热打铁），答对才按间隔递增
+    const nextReview = correct ? addDaysLocal(INTERVALS[newLevel]) : now;
+    db.prepare('UPDATE review_items SET interval_level = ?, next_review = ?, last_review = ? WHERE id = ?')
+      .run(newLevel, nextReview, now, existing.id);
   } else {
-    const next = new Date(today.getTime() + INTERVALS[0] * 24 * 60 * 60 * 1000);
-    db.prepare('INSERT INTO review_items (child_id, module, item_id, interval_level, next_review, last_review) VALUES (?, ?, ?, 0, ?, datetime(\'now\'))')
-      .run(child_id, module, item_id, next.toISOString());
+    const nextReview = correct ? addDaysLocal(INTERVALS[0]) : now;
+    db.prepare('INSERT INTO review_items (child_id, module, item_id, interval_level, next_review, last_review) VALUES (?, ?, ?, 0, ?, ?)')
+      .run(child_id, module, item_id, nextReview, now);
     if (!correct) {
       recordWrongQuestion(child_id, module, item_id, question || '', user_answer || '', correct_answer || '', explanation || '');
     }
@@ -73,14 +100,17 @@ router.post('/', (req, res) => {
   // 更新星星和连续打卡
   const reward = db.prepare('SELECT * FROM rewards WHERE child_id = ?').get(child_id);
   if (reward) {
-    const newStars = reward.stars + (correct ? 2 : 1);
-    const todayStr = today.toISOString().slice(0, 10);
-    const lastDate = reward.last_study_date ? reward.last_study_date.slice(0, 10) : null;
+    // 只有答对才奖励星星，避免孩子乱点也能攒星星
+    const newStars = reward.stars + (correct ? 2 : 0);
+    const todayStr = todayLocal();
+    const lastDate = reward.last_study_date ? String(reward.last_study_date).slice(0, 10) : null;
     let newStreak = reward.streak;
     if (lastDate !== todayStr) {
       if (lastDate) {
-        const last = new Date(lastDate);
-        const diff = Math.round((today - last) / (24 * 60 * 60 * 1000));
+        // 以本地日期零点做差，避免 UTC 解析造成的天数偏移
+        const last = new Date(`${lastDate}T00:00:00`);
+        const today0 = new Date(`${todayStr}T00:00:00`);
+        const diff = Math.round((today0 - last) / (24 * 60 * 60 * 1000));
         newStreak = diff === 1 ? reward.streak + 1 : 1;
       } else {
         newStreak = 1;
@@ -100,23 +130,15 @@ router.get('/review/:child_id', (req, res) => {
   const child = verifyChild(req.params.child_id, req.userId);
   if (!child) return res.status(403).json({ error: '无权操作' });
 
-  const now = new Date().toISOString();
+  const now = nowLocal();
   const items = db.prepare(`
     SELECT * FROM review_items WHERE child_id = ? AND next_review <= ? ORDER BY next_review ASC
   `).all(req.params.child_id, now);
 
-  // 附带内容详情
-  const result = items.map(item => {
-    let detail = null;
-    if (item.module === 'characters') {
-      detail = db.prepare('SELECT hanzi, pinyin, emoji FROM characters WHERE id = ?').get(item.item_id);
-    } else if (item.module === 'english') {
-      detail = db.prepare('SELECT english, chinese, emoji FROM words WHERE id = ?').get(item.item_id);
-    } else if (item.module === 'grammar') {
-      detail = db.prepare('SELECT question FROM grammar_problems WHERE id = ?').get(item.item_id);
-    }
-    return { ...item, memory_label: MEMORY_LEVELS[item.interval_level] || '陌生', detail };
-  });
+  // 附带内容详情；内容已被删除的孤儿复习项不再下发，避免前端渲染出错
+  const result = items
+    .map(item => ({ ...item, memory_label: MEMORY_LEVELS[item.interval_level] || '陌生', detail: fetchDetail(item.module, item.item_id) }))
+    .filter(item => item.detail !== null);
 
   res.json(result);
 });
@@ -126,11 +148,18 @@ router.get('/wrong/:child_id', (req, res) => {
   const child = verifyChild(req.params.child_id, req.userId);
   if (!child) return res.status(403).json({ error: '无权操作' });
 
-  const module = req.query.module;
+  // module 支持逗号分隔多个值，例如 english,grammar,listening,reading
+  const modules = req.query.module
+    ? String(req.query.module).split(',').map(s => s.trim()).filter(Boolean)
+    : [];
   let rows;
-  if (module) {
-    rows = db.prepare('SELECT * FROM wrong_questions WHERE child_id = ? AND module = ? AND mastered = 0 ORDER BY wrong_count DESC, last_wrong_at DESC')
-      .all(req.params.child_id, module);
+  if (modules.length) {
+    const placeholders = modules.map(() => '?').join(',');
+    rows = db.prepare(`
+      SELECT * FROM wrong_questions
+      WHERE child_id = ? AND module IN (${placeholders}) AND mastered = 0
+      ORDER BY wrong_count DESC, last_wrong_at DESC
+    `).all(req.params.child_id, ...modules);
   } else {
     rows = db.prepare('SELECT * FROM wrong_questions WHERE child_id = ? AND mastered = 0 ORDER BY wrong_count DESC, last_wrong_at DESC')
       .all(req.params.child_id);

@@ -8,6 +8,8 @@ export default function Books() {
   const [books, setBooks] = useState([]);
   const [currentBook, setCurrentBook] = useState(null);
   const [page, setPage] = useState(0);
+  const [startTime, setStartTime] = useState(null);
+  const [finished, setFinished] = useState(false);
 
   useEffect(() => {
     api.get('/courses/books').then(res => setBooks(res.data)).catch(() => {});
@@ -17,7 +19,27 @@ export default function Books() {
     api.get(`/courses/books/${id}`).then(res => {
       setCurrentBook(res.data);
       setPage(0);
+      setStartTime(Date.now());
+      setFinished(false);
     });
+  };
+
+  // 读完整本后上报进度，计入星星、复习队列与学习统计
+  const finishBook = () => {
+    if (!activeChild || !currentBook || finished) return;
+    const duration = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
+    api.post('/progress', {
+      child_id: activeChild.id,
+      module: 'books',
+      item_id: currentBook.id,
+      correct: true,
+      duration,
+      question: currentBook.title,
+      user_answer: '',
+      correct_answer: currentBook.title,
+      explanation: '',
+    }).catch(() => {});
+    setFinished(true);
   };
 
   if (!activeChild) return <p className="text-center text-gray-400 py-10">请先选择孩子</p>;
@@ -47,9 +69,22 @@ export default function Books() {
             <Icon name="chevronRight" size={18} className="rotate-180" />上一页
           </button>
           <span className="text-lg font-bold text-gray-600">{page + 1} / {currentBook.pages.length}</span>
-          <button onClick={() => setPage(Math.min(currentBook.pages.length - 1, page + 1))} disabled={page === currentBook.pages.length - 1}
-            className="btn-kid bg-kid-pink text-white disabled:opacity-30">下一页 <Icon name="chevronRight" size={18} /></button>
+          {page === currentBook.pages.length - 1 ? (
+            <button onClick={finishBook} disabled={finished}
+              className="btn-kid bg-kid-green text-white disabled:opacity-60">
+              {finished ? '已读完 ✓' : '读完了 ✓'}
+            </button>
+          ) : (
+            <button onClick={() => setPage(Math.min(currentBook.pages.length - 1, page + 1))}
+              className="btn-kid bg-kid-pink text-white">下一页 <Icon name="chevronRight" size={18} /></button>
+          )}
         </div>
+        {finished && (
+          <div className="bg-kid-green/15 border-2 border-kid-green rounded-2xl p-4 text-center">
+            <p className="text-xl font-bold text-kid-green">太棒了！读完《{currentBook.title}》</p>
+            <p className="text-gray-600 mt-1">获得 2 颗星星 ⭐⭐，已加入复习计划</p>
+          </div>
+        )}
       </div>
     );
   }

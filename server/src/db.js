@@ -1,7 +1,11 @@
-import Database from 'better-sqlite3';
+import { createDatabase } from './sqlite.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+import bcrypt from 'bcryptjs';
+import { nowLocal, utcOffsetMinutes } from './time.js';
+// 1000 个汉字（20 关 × 50 字），依据人教版识字表由易到难
+import { CHARACTERS } from './data/characters.generated.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dbPath = join(__dirname, '..', 'data', 'kidstar.db');
@@ -10,12 +14,12 @@ const dbPath = join(__dirname, '..', 'data', 'kidstar.db');
 const dataDir = join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
-const db = new Database(dbPath);
+const db = createDatabase(dbPath);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 // ==================== Schema ====================
-db.exec(`
+db.exec(`你
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
@@ -118,6 +122,18 @@ CREATE TABLE IF NOT EXISTS child_badges (
   UNIQUE(child_id, badge_id)
 );
 
+-- 学习位置：记住孩子在每个模块学到第几个，下次进来接着学（洪恩式主线进度）
+CREATE TABLE IF NOT EXISTS learning_state (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  child_id INTEGER NOT NULL,
+  module TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT '',
+  position INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT,
+  UNIQUE(child_id, module, scope),
+  FOREIGN KEY (child_id) REFERENCES children(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS grammar_problems (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   type TEXT NOT NULL,
@@ -179,66 +195,172 @@ CREATE TABLE IF NOT EXISTS chinese_readings (
 );
 `);
 
+// 汉字标准笔画数（简体）。早期版本误用 hanzi.length 填充，导致所有字都是 1 画。
+const STROKE_COUNT = {
+  人: 2, 口: 3, 日: 4, 月: 4, 山: 3, 水: 4, 火: 4, 木: 4, 土: 3, 石: 5,
+  大: 3, 小: 3, 上: 3, 下: 3, 中: 4, 天: 4, 地: 6, 花: 7, 草: 9, 树: 9,
+  爸: 8, 妈: 6, 哥: 10, 姐: 8, 弟: 7, 妹: 8, 家: 10, 友: 4, 爱: 10, 笑: 10,
+  学: 8, 书: 4, 笔: 10, 纸: 7, 数: 13, 字: 6, 语: 9, 画: 8, 乐: 5, 游: 12,
+};
+
+// ==================== 轻量迁移 ====================
+// 此前没有任何迁移机制，改数据结构只能删库重建。
+// 这里用 migrations 表记录已执行的迁移，保证幂等、可重复运行。
+db.exec(`
+CREATE TABLE IF NOT EXISTS migrations (
+  name TEXT PRIMARY KEY,
+  applied_at TEXT
+);
+`);
+
+// 生成不重复的选项：把与前面重复的项替换成一个未出现过的值
+function dedupeOptions(options) {
+  const list = [...options];
+  for (let i = 1; i < list.length; i++) {
+    for (let j = 0; j < i; j++) {
+      if (list[i] === list[j]) {
+        let candidate = typeof list[i] === 'number' ? list[i] + 1 : `${list[i]}（2）`;
+        while (list.includes(candidate)) {
+          candidate = typeof candidate === 'number' ? candidate + 1 : `${candidate}*`;
+        }
+        list[i] = candidate;
+      }
+    }
+  }
+  return list;
+}
+
+const MIGRATIONS = {
+  // 修正汉字笔画数
+  'fix-character-stroke-count': () => {
+    const upd = db.prepare('UPDATE characters SET stroke_count = ? WHERE hanzi = ?');
+    for (const [hanzi, count] of Object.entries(STROKE_COUNT)) {
+      upd.run(count, hanzi);
+    }
+  },
+
+  // 汉字扩充到 1000 个（20 关 × 50 字）：保留已有数据和学习进度，只补入缺失的字，
+  // 并把旧字的关卡/拼音/释义/组词同步到新的教材顺序，保证分级一致。
+  'expand-characters-to-1000': () => {
+    const exists = new Set(db.prepare('SELECT hanzi FROM characters').all().map(r => r.hanzi));
+    const insertChar = db.prepare('INSERT INTO characters (hanzi, pinyin, meaning, stroke_count, level, emoji, words) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    const updateChar = db.prepare('UPDATE characters SET level = ?, pinyin = ?, meaning = ?, words = ?, stroke_count = ? WHERE hanzi = ?');
+    let added = 0, updated = 0;
+    for (const c of CHARACTERS) {
+      if (exists.has(c.hanzi)) {
+        updateChar.run(c.level, c.pinyin, c.meaning, c.words, c.stroke_count, c.hanzi);
+        updated++;
+      } else {
+        insertChar.run(c.hanzi, c.pinyin, c.meaning, c.stroke_count, c.level, c.emoji, c.words);
+        added++;
+      }
+    }
+    console.log(`   汉字：新增 ${added} 个，同步 ${updated} 个，共 ${CHARACTERS.length} 个`);
+  },
+
+  // 清理不在字表里的旧汉字（如早期手工数据残留），保证库里就是这 1000 个字
+  'cleanup-orphan-characters': () => {
+    const keep = CHARACTERS.map(c => c.hanzi);
+    const placeholders = keep.map(() => '?').join(',');
+    const res = db.prepare(`DELETE FROM characters WHERE hanzi NOT IN (${placeholders})`).run(...keep);
+    if (res.changes) console.log(`   清理旧汉字 ${res.changes} 个`);
+  },
+
+  // 修正历史 UTC 时间戳为本地时间（表结构里的 DEFAULT datetime('now') 写入的是 UTC）
+  'fix-utc-timestamps': () => {
+    const offset = utcOffsetMinutes();
+    if (offset === 0) return;
+    const delta = `${offset >= 0 ? '+' : ''}${offset} minutes`;
+    const columns = {
+      users: ['created_at'],
+      children: ['created_at'],
+      progress: ['created_at'],
+      review_items: ['next_review', 'last_review'],
+      wrong_questions: ['created_at', 'last_wrong_at'],
+      child_badges: ['unlocked_at'],
+      rewards: ['last_study_date'],
+    };
+    for (const [table, cols] of Object.entries(columns)) {
+      for (const col of cols) {
+        db.exec(`UPDATE ${table} SET ${col} = datetime(${col}, '${delta}') WHERE ${col} IS NOT NULL`);
+      }
+    }
+  },
+
+  // 修正数学题重复选项（加减法曾生成两个相同的干扰项）
+  'fix-math-duplicate-options': () => {
+    const rows = db.prepare("SELECT id, options, answer FROM math_problems WHERE type = 'arithmetic'").all();
+    const upd = db.prepare('UPDATE math_problems SET options = ?, answer = ? WHERE id = ?');
+    for (const row of rows) {
+      let opts;
+      try { opts = JSON.parse(row.options); } catch { continue; }
+      if (!Array.isArray(opts) || new Set(opts).size === opts.length) continue;
+      const answerValue = opts[row.answer];
+      const fixed = dedupeOptions(opts);
+      upd.run(JSON.stringify(fixed), fixed.indexOf(answerValue), row.id);
+    }
+  },
+
+  // 删除重复单词：同一英文词被放进多个分类（apple/banana 同时在"食物"和"水果"），
+  // 会让答题选项里出现两个完全相同的单词，孩子无从分辨
+  'remove-duplicate-words': () => {
+    const dups = db.prepare('SELECT english, GROUP_CONCAT(id) AS ids FROM words GROUP BY english HAVING COUNT(*) > 1').all();
+    for (const d of dups) {
+      const ids = String(d.ids).split(',').map(Number).sort((a, b) => a - b);
+      const keep = ids[0];
+      for (const drop of ids.slice(1)) {
+        // 把已有的学习记录指向保留的那条；用 OR IGNORE 避免撞上唯一约束
+        db.prepare('UPDATE OR IGNORE progress SET item_id = ? WHERE module = ? AND item_id = ?').run(keep, 'english', drop);
+        db.prepare('UPDATE OR IGNORE wrong_questions SET item_id = ? WHERE module = ? AND item_id = ?').run(keep, 'english', drop);
+        db.prepare('UPDATE OR IGNORE review_items SET item_id = ? WHERE module = ? AND item_id = ?').run(keep, 'english', drop);
+        db.prepare('DELETE FROM words WHERE id = ?').run(drop);
+      }
+    }
+  },
+
+  // 补索引：所有业务查询都按 child_id 过滤，此前只有主键索引，数据量增长后会明显变慢
+  'add-performance-indexes': () => {
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_children_user ON children(user_id);
+      CREATE INDEX IF NOT EXISTS idx_progress_child ON progress(child_id);
+      CREATE INDEX IF NOT EXISTS idx_progress_child_day ON progress(child_id, created_at);
+      CREATE INDEX IF NOT EXISTS idx_review_child_next ON review_items(child_id, next_review);
+      CREATE INDEX IF NOT EXISTS idx_wrong_child ON wrong_questions(child_id, mastered);
+      CREATE INDEX IF NOT EXISTS idx_child_badges_child ON child_badges(child_id);
+      CREATE INDEX IF NOT EXISTS idx_characters_level ON characters(level);
+      CREATE INDEX IF NOT EXISTS idx_words_category ON words(category);
+      CREATE INDEX IF NOT EXISTS idx_math_type ON math_problems(type);
+    `);
+    // 复习项本应唯一；存量库若有重复记录则跳过，避免启动失败
+    try {
+      db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_review_unique ON review_items(child_id, module, item_id)');
+    } catch (e) {
+      console.warn('⚠️ 复习项存在重复记录，未创建唯一索引：', e.message);
+    }
+  },
+};
+
+function migrate() {
+  const applied = new Set(db.prepare('SELECT name FROM migrations').all().map(r => r.name));
+  for (const [name, fn] of Object.entries(MIGRATIONS)) {
+    if (applied.has(name)) continue;
+    fn();
+    db.prepare('INSERT INTO migrations (name, applied_at) VALUES (?, ?)').run(name, nowLocal());
+    console.log(`✅ 迁移已应用: ${name}`);
+  }
+}
+
 // ==================== Seed Data ====================
 function seed() {
   // 检查是否已有种子数据
   const charCount = db.prepare('SELECT COUNT(*) as c FROM characters').get().c;
   if (charCount > 0) return;
 
-  // --- 汉字（4级，每级10个）---
-  const hanziData = [
-    // L1 入门 - 简单象形字
-    { hanzi: '人', pinyin: 'rén', meaning: '人类', emoji: '🧑', words: '人们,大人,好人' },
-    { hanzi: '口', pinyin: 'kǒu', meaning: '嘴巴', emoji: '👄', words: '口水,开口,门口' },
-    { hanzi: '日', pinyin: 'rì', meaning: '太阳', emoji: '☀️', words: '日出,日子,今日' },
-    { hanzi: '月', pinyin: 'yuè', meaning: '月亮', emoji: '🌙', words: '月亮,月光,明月' },
-    { hanzi: '山', pinyin: 'shān', meaning: '山峰', emoji: '⛰️', words: '山水,高山,上山' },
-    { hanzi: '水', pinyin: 'shuǐ', meaning: '水', emoji: '💧', words: '水果,喝水,河水' },
-    { hanzi: '火', pinyin: 'huǒ', meaning: '火焰', emoji: '🔥', words: '火车,大火,火苗' },
-    { hanzi: '木', pinyin: 'mù', meaning: '树木', emoji: '🌳', words: '木头,树木,草木' },
-    { hanzi: '土', pinyin: 'tǔ', meaning: '泥土', emoji: '🌱', words: '土地,泥土,黄土' },
-    { hanzi: '石', pinyin: 'shí', meaning: '石头', emoji: '🪨', words: '石头,岩石,宝石' },
-    // L2 基础
-    { hanzi: '大', pinyin: 'dà', meaning: '大的', emoji: '🐘', words: '大人,大家,大地' },
-    { hanzi: '小', pinyin: 'xiǎo', meaning: '小的', emoji: '🐭', words: '小鸟,小心,大小' },
-    { hanzi: '上', pinyin: 'shàng', meaning: '上面', emoji: '⬆️', words: '上下,上学,上面' },
-    { hanzi: '下', pinyin: 'xià', meaning: '下面', emoji: '⬇️', words: '下雨,下面,坐下' },
-    { hanzi: '中', pinyin: 'zhōng', meaning: '中间', emoji: '🎯', words: '中国,中间,中心' },
-    { hanzi: '天', pinyin: 'tiān', meaning: '天空', emoji: '🌤️', words: '天空,今天,天气' },
-    { hanzi: '地', pinyin: 'dì', meaning: '地面', emoji: '🌍', words: '地球,土地,地方' },
-    { hanzi: '花', pinyin: 'huā', meaning: '花朵', emoji: '🌸', words: '花朵,花园,开花' },
-    { hanzi: '草', pinyin: 'cǎo', meaning: '草', emoji: '🌿', words: '草地,青草,小草' },
-    { hanzi: '树', pinyin: 'shù', meaning: '树木', emoji: '🌲', words: '树林,大树,树叶' },
-    // L3 进阶
-    { hanzi: '爸', pinyin: 'bà', meaning: '爸爸', emoji: '👨', words: '爸爸,爸妈' },
-    { hanzi: '妈', pinyin: 'mā', meaning: '妈妈', emoji: '👩', words: '妈妈,妈咪' },
-    { hanzi: '哥', pinyin: 'gē', meaning: '哥哥', emoji: '👦', words: '哥哥,大哥' },
-    { hanzi: '姐', pinyin: 'jiě', meaning: '姐姐', emoji: '👧', words: '姐姐,大姐' },
-    { hanzi: '弟', pinyin: 'dì', meaning: '弟弟', emoji: '🧒', words: '弟弟,兄弟' },
-    { hanzi: '妹', pinyin: 'mèi', meaning: '妹妹', emoji: '👧', words: '妹妹,姐妹' },
-    { hanzi: '家', pinyin: 'jiā', meaning: '家庭', emoji: '🏠', words: '家人,回家,大家' },
-    { hanzi: '友', pinyin: 'yǒu', meaning: '朋友', emoji: '🤝', words: '朋友,好友,友谊' },
-    { hanzi: '爱', pinyin: 'ài', meaning: '喜爱', emoji: '❤️', words: '爱心,喜爱,爱国' },
-    { hanzi: '笑', pinyin: 'xiào', meaning: '微笑', emoji: '😊', words: '笑容,大笑,笑话' },
-    // L4 提高
-    { hanzi: '学', pinyin: 'xué', meaning: '学习', emoji: '📚', words: '学习,学生,上学' },
-    { hanzi: '书', pinyin: 'shū', meaning: '书本', emoji: '📖', words: '书本,读书,图书' },
-    { hanzi: '笔', pinyin: 'bǐ', meaning: '笔', emoji: '✏️', words: '铅笔,毛笔,画笔' },
-    { hanzi: '纸', pinyin: 'zhǐ', meaning: '纸张', emoji: '📄', words: '白纸,纸张,报纸' },
-    { hanzi: '数', pinyin: 'shù', meaning: '数字', emoji: '🔢', words: '数学,数字,计数' },
-    { hanzi: '字', pinyin: 'zì', meaning: '文字', emoji: '🔤', words: '汉字,文字,写字' },
-    { hanzi: '语', pinyin: 'yǔ', meaning: '语言', emoji: '💬', words: '语文,语言,英语' },
-    { hanzi: '画', pinyin: 'huà', meaning: '绘画', emoji: '🎨', words: '画画,图画,画家' },
-    { hanzi: '乐', pinyin: 'lè', meaning: '快乐', emoji: '😄', words: '快乐,音乐,欢乐' },
-    { hanzi: '游', pinyin: 'yóu', meaning: '游戏', emoji: '🎮', words: '游戏,游泳,旅游' },
-  ];
-
+  // --- 汉字（1000字，20级，每级50个；来源：人教版识字表，由易到难）---
   const insertChar = db.prepare('INSERT INTO characters (hanzi, pinyin, meaning, stroke_count, level, emoji, words) VALUES (?, ?, ?, ?, ?, ?, ?)');
-  hanziData.forEach((c, i) => {
-    const level = Math.floor(i / 10) + 1;
-    insertChar.run(c.hanzi, c.pinyin, c.meaning, c.hanzi.length, level, c.emoji, c.words);
-  });
-
+  for (const c of CHARACTERS) {
+    insertChar.run(c.hanzi, c.pinyin, c.meaning, c.stroke_count, c.level, c.emoji, c.words);
+  }
   // --- 英语单词（5类）---
   const wordData = [
     // 动物
@@ -309,12 +431,14 @@ function seed() {
       ans = a + b;
     } else {
       a = Math.floor(Math.random() * 10) + 5;
-      b = Math.floor(Math.random() * a) + 1;
+      b = Math.floor(Math.random() * (a - 1)) + 1; // b < a，保证答案 >= 1
       ans = a - b;
     }
+    // 生成两个互不相同的干扰项：一个比答案大，一个比答案小（不够小则取更大的数）
     const wrong1 = ans + Math.floor(Math.random() * 3) + 1;
-    const wrong2 = ans - Math.floor(Math.random() * 3) - 1;
-    const options = [ans, wrong1, Math.max(0, wrong2)].sort(() => Math.random() - 0.5);
+    let wrong2 = ans - Math.floor(Math.random() * 3) - 1;
+    if (wrong2 < 0) wrong2 = ans + Math.floor(Math.random() * 3) + 4;
+    const options = dedupeOptions([ans, wrong1, wrong2]).sort(() => Math.random() - 0.5);
     mathData.push({ type: 'arithmetic', question: `${a} ${op} ${b} = ?`, options: JSON.stringify(options), answer: options.indexOf(ans), level: 2 });
   }
   // 图形识别
@@ -495,12 +619,31 @@ function seedMoreWords() {
     { english: 'socks', chinese: '袜子', category: '衣物', emoji: '🧦' },
   ];
   const insertWord = db.prepare('INSERT INTO words (english, chinese, category, emoji) VALUES (?, ?, ?, ?)');
-  moreWords.forEach(w => insertWord.run(w.english, w.chinese, w.category, w.emoji));
+  const existWord = db.prepare('SELECT id FROM words WHERE english = ?');
+  moreWords.forEach(w => {
+    // 同一单词只允许存在一个分类，否则答题选项里会出现两个一模一样的单词
+    if (existWord.get(w.english)) return;
+    insertWord.run(w.english, w.chinese, w.category, w.emoji);
+  });
   console.log('✅ 扩充单词分类完成（水果/家具/球类/交通/衣物）');
 }
 
+// 默认演示账号（上线前请删除该函数的调用，或强制首次登录修改密码）
+function seedDefaultUser() {
+  const DEFAULT_USERNAME = 'admin';
+  const DEFAULT_PASSWORD = '123456';
+  const exists = db.prepare('SELECT id FROM users WHERE username = ?').get(DEFAULT_USERNAME);
+  if (exists) return;
+  const hash = bcrypt.hashSync(DEFAULT_PASSWORD, 10);
+  db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run(DEFAULT_USERNAME, hash);
+  console.log(`✅ 默认账号已创建：${DEFAULT_USERNAME} / ${DEFAULT_PASSWORD}`);
+}
+
+// 先迁移再播种：迁移只修正存量数据，避免把新写入的本地时间再偏移一次
+migrate();
 seed();
 seedNewModules();
 seedMoreWords();
+seedDefaultUser();
 
 export default db;

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { applyTtsConfig } from './utils/tts.js';
 
 const api = axios.create({
   baseURL: '/api',
@@ -24,14 +25,42 @@ api.interceptors.response.use(
 );
 
 // Web Speech API 封装
-export function speak(text, lang = 'zh-CN') {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = lang;
-  utter.rate = 0.8;
-  utter.pitch = 1.2;
-  window.speechSynthesis.speak(utter);
+// 返回是否真的发声，并通过 onStart/onEnd 让界面能显示"播放中"状态，
+// 避免点了按钮却毫无反馈（浏览器不支持或没有音频设备时会静默失败）
+export function speak(text, lang = 'zh-CN', { onStart, onEnd } = {}) {
+  const done = () => onEnd && onEnd();
+  if (!text || !('speechSynthesis' in window)) {
+    done();
+    return false;
+  }
+  try {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(String(text));
+    applyTtsConfig(utter, lang);
+
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(fallback);
+      done();
+    };
+    // 只在语音压根没启动时兜底复位状态（例如没有音频设备、被浏览器策略拦截），
+    // 一旦开始朗读就交给 onend，避免长句子还没读完状态就提前复位
+    const fallback = setTimeout(() => { if (!finished) finish(); }, 800);
+    utter.onstart = () => {
+      clearTimeout(fallback);
+      if (onStart) onStart();
+    };
+    utter.onend = finish;
+    utter.onerror = finish;
+
+    window.speechSynthesis.speak(utter);
+    return true;
+  } catch {
+    done();
+    return false;
+  }
 }
 
 export default api;

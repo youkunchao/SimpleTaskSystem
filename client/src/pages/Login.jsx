@@ -59,7 +59,17 @@ export default function Login() {
             登 录
           </button>
         </form>
-        <p className="text-center mt-6 text-gray-500">
+        <p className="text-center mt-4 text-sm text-gray-400">
+          演示账号 admin / 123456
+          <button
+            type="button"
+            onClick={() => { setUsername('admin'); setPassword('123456'); }}
+            className="ml-2 text-kid-blue font-bold"
+          >
+            一键填入
+          </button>
+        </p>
+        <p className="text-center mt-2 text-gray-500">
           还没有账号？<Link to="/register" className="text-kid-blue font-bold">立即注册</Link>
         </p>
       </div>

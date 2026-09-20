@@ -41,3 +41,143 @@ body {
   @apply inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl font-bold whitespace-nowrap transition-all duration-200 active:scale-95;
 }
 
+/* 朗读中：跳动的声波，让孩子知道"正在出声" */
+@keyframes soundwave {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+.wave-bar {
+  @apply inline-block w-1.5 rounded-full bg-current;
+  height: 1.4rem;
+  transform-origin: center;
+  animation: soundwave 0.6s ease-in-out infinite;
+}
+
+.wave-bar:nth-child(2) { animation-delay: 0.15s; }
+.wave-bar:nth-child(3) { animation-delay: 0.3s; }
+
+/* 播放中的呼吸光晕 */
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55); }
+  50% { box-shadow: 0 0 0 12px rgba(52, 211, 153, 0); }
+}
+
+.playing-glow {
+  animation: glow 1.2s ease-out infinite;
+}
+
+/* ==================== 洪恩风场景与卡通元素 ==================== */
+
+/* 全屏卡通场景：天空渐变 + 底部草地 */
+.scene {
+  position: relative;
+  border-radius: 1.75rem;
+  overflow: hidden;
+  background: linear-gradient(180deg, #A9E4FF 0%, #CDEFFF 45%, #EAFBE7 62%, #B9EC9B 100%);
+}
+.scene-ground {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -6%;
+  height: 34%;
+  background: radial-gradient(120% 90% at 50% 0%, #C8F0A0 0%, #9BDE7A 55%, #7FD45F 100%);
+  border-radius: 50% 50% 0 0 / 40% 40% 0 0;
+}
+
+/* 漂浮的云朵 / 装饰 */
+@keyframes drift {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(18px); }
+  100% { transform: translateX(0); }
+}
+.cloud-drift { animation: drift 6s ease-in-out infinite; }
+
+/* 吉祥物/字卡：上下浮动 */
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.floaty { animation: floaty 2.6s ease-in-out infinite; }
+
+/* 出场弹跳 */
+@keyframes pop-in {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.pop-in { animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* 轻微摇摆（动物出场） */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+.wiggle { animation: wiggle 1.8s ease-in-out infinite; }
+
+/* 卡通立体按钮 */
+.btn-3d {
+  @apply font-bold rounded-2xl transition-all duration-150 active:translate-y-1 select-none;
+  box-shadow: 0 5px 0 0 rgba(0, 0, 0, 0.18);
+}
+.btn-3d:active { box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.18); }
+
+/* 顶部五步条的小圆片按钮 */
+.step-chip {
+  @apply flex flex-col items-center justify-center rounded-2xl font-bold transition-all duration-200 active:scale-95;
+  width: 3rem; height: 3rem;
+}
+.step-chip-active { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 4px 0 0 rgba(0, 0, 0, 0.12); }
+
+/* ==================== 拖拽轨道地图（横屏左右 / 竖屏上下） ==================== */
+
+/* 外层可视窗口：固定高度，超出隐藏，禁止浏览器默认手势（由我们自己处理拖拽） */
+.track-win {
+  position: relative;
+  overflow: hidden;
+  min-height: 150px;               /* 矮屏下也保留可拖动区域 */
+  touch-action: none;              /* 关键：交给 JS 拖拽，避免与页面滚动冲突 */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+.track-win:active { cursor: grabbing; }
+
+/* 内部长轨道：绝对定位脱离文档流（竖屏时轨道高度可达十几万像素，不能撑开可视窗口），
+   用 transform 平移，配合 transition 实现回弹/定位动画 */
+.track-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+/* 轨道节点：绝对定位在各自槽位 */
+.track-node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24%;
+  transition: transform 0.12s ease;
+}
+/* 点击缩放反馈 */
+.track-node:active { transform: scale(0.88); }
+
+/* 当前学习方块的发光呼吸动画 */
+@keyframes cubeGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 176, 31, 0.75), 0 8px 0 #D1830B; }
+  50%      { box-shadow: 0 0 0 14px rgba(255, 176, 31, 0), 0 8px 0 #D1830B; }
+}
+.cube-glow { animation: cubeGlow 1.5s ease-in-out infinite; }
+
+/* 草地小径（增强"在路上"的感觉）；横向/纵向的走向与尺寸由内联样式决定 */
+.track-path {
+  position: absolute;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 250, 238, 0.55), rgba(226, 205, 172, 0.55));
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+

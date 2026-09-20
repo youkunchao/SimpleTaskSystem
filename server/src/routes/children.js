@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import db from '../db.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { nowLocal } from '../time.js';
 
 const router = Router();
 router.use(authMiddleware);
@@ -17,8 +18,8 @@ router.post('/', (req, res) => {
   if (!name || !age) {
     return res.status(400).json({ error: '姓名和年龄必填' });
   }
-  const result = db.prepare('INSERT INTO children (user_id, name, age, avatar) VALUES (?, ?, ?, ?)')
-    .run(req.userId, name, age, avatar || '🦊');
+  const result = db.prepare('INSERT INTO children (user_id, name, age, avatar, created_at) VALUES (?, ?, ?, ?, ?)')
+    .run(req.userId, name, age, avatar || '🦊', nowLocal());
   // 初始化奖励记录
   db.prepare('INSERT INTO rewards (child_id, stars, streak) VALUES (?, 0, 0)').run(result.lastInsertRowid);
   const child = db.prepare('SELECT * FROM children WHERE id = ?').get(result.lastInsertRowid);

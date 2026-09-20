@@ -9,7 +9,7 @@ import {
   Music, Mic, Brain, Gamepad2, Rocket, Crown, Medal, ThumbsUp,
   CheckCircle2, X, AlertCircle, Info, Settings, User, UserPlus,
   Edit, ListChecks, Bell, MapPin, Clock, Play, Pause, ChevronRight,
-  Bookmark, Flag, Tag, Image, Camera, Database, Globe, Compass,
+  Bookmark, Flag, Tag, Image, Camera, Database, Globe, Compass, ArrowLeft,
   Droplet, Zap, Lock, Unlock, Eye, EyeOff, Mail, Shapes, Scale,
 } from 'lucide-react';
 
@@ -89,6 +89,7 @@ const map = {
   database: Database,
   globe: Globe,
   compass: Compass,
+  back: ArrowLeft,
   droplet: Droplet,
   zap: Zap,
   lock: Lock,
