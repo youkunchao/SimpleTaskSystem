@@ -13,6 +13,7 @@ import Books from './pages/Books.jsx';
 import Progress from './pages/Progress.jsx';
 import Rewards from './pages/Rewards.jsx';
 import Settings from './pages/Settings.jsx';
+import ChildrenConfig from './pages/ChildrenConfig.jsx';
 
 function ProtectedRoute({ children }) {
   const { token } = useAuth();
@@ -42,16 +43,18 @@ function Layout({ children }) {
             <h1 className="text-2xl font-bold text-kid-orange inline-flex items-center gap-1.5">
               <Icon name="sparkles" size={24} className="text-kid-yellow" />启蒙星
             </h1>
-            {activeChild ? (
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-kid-orange/10">
-                  <Icon name={activeChild.avatar} size={22} className="text-kid-orange" />
-                </span>
-                <span className="text-lg font-bold text-gray-700">{activeChild.name}</span>
-                <button onClick={() => navigate('/courses')} className="text-sm bg-kid-blue text-white px-3 py-1 rounded-full">切换</button>
-              </div>
-            ) : (
-              <button onClick={() => navigate('/courses')} className="text-sm bg-kid-blue text-white px-3 py-1 rounded-full">管理孩子</button>
+            {location.pathname !== '/children' && (
+              activeChild ? (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-kid-orange/10">
+                    <Icon name={activeChild.avatar} size={22} className="text-kid-orange" />
+                  </span>
+                  <span className="text-lg font-bold text-gray-700">{activeChild.name}</span>
+                  <button onClick={() => navigate('/children', { state: { from: location.pathname } })} className="text-sm bg-kid-blue text-[#3a2a1a] px-3 py-1 rounded-full">切换</button>
+                </div>
+              ) : (
+                <button onClick={() => navigate('/children', { state: { from: location.pathname } })} className="text-sm bg-kid-blue text-[#3a2a1a] px-3 py-1 rounded-full">管理孩子</button>
+              )
             )}
             <button onClick={() => navigate('/settings')} className="text-sm text-gray-500 hover:text-kid-orange inline-flex items-center gap-1" title="朗读设置">
               <Icon name="settings" size={18} />设置
@@ -94,6 +97,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/" element={<ProtectedRoute><Layout><Home /></Layout></ProtectedRoute>} />
       <Route path="/courses" element={<ProtectedRoute><Layout><Courses /></Layout></ProtectedRoute>} />
+      <Route path="/children" element={<ProtectedRoute><Layout><ChildrenConfig /></Layout></ProtectedRoute>} />
       <Route path="/characters" element={<ProtectedRoute><Layout><Characters /></Layout></ProtectedRoute>} />
       <Route path="/english" element={<ProtectedRoute><Layout><English /></Layout></ProtectedRoute>} />
       <Route path="/math" element={<ProtectedRoute><Layout><MathGame /></Layout></ProtectedRoute>} />

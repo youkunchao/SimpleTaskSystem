@@ -167,8 +167,8 @@ body {
 
 /* 当前学习方块的发光呼吸动画 */
 @keyframes cubeGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 176, 31, 0.75), 0 8px 0 #D1830B; }
-  50%      { box-shadow: 0 0 0 14px rgba(255, 176, 31, 0), 0 8px 0 #D1830B; }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 176, 31, 0.7), 0 10px 0 #C9760A; }
+  50%      { box-shadow: 0 0 0 16px rgba(255, 176, 31, 0), 0 10px 0 #C9760A; }
 }
 .cube-glow { animation: cubeGlow 1.5s ease-in-out infinite; }
 
@@ -179,5 +179,105 @@ body {
   background: linear-gradient(180deg, rgba(255, 250, 238, 0.55), rgba(226, 205, 172, 0.55));
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
 }
+
+/* ==================== 游戏地图场景增强（可探索地图改造） ==================== */
+
+/* 节点抬到路径与装饰之上 */
+.track-node { z-index: 2; }
+
+/* --- 远景：太阳 --- */
+.map-sun {
+  position: absolute; top: 7%; right: 12%; width: 72px; height: 72px; border-radius: 50%; z-index: 1; pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, #FFF6C2 0%, #FFD84D 55%, #FFB300 100%);
+  box-shadow: 0 0 46px 14px rgba(255, 216, 77, 0.5);
+}
+
+/* --- 远景：卡通蓬松云朵（缓慢飘动 + 轻微视差） --- */
+.map-clouds { position: absolute; left: -12%; right: -12%; top: -12%; bottom: -12%; z-index: 1; pointer-events: none; }
+.map-clouds .cloud {
+  position: absolute; height: 26px; border-radius: 20px; background: #fff;
+  box-shadow:
+    26px -12px 0 -3px #fff, 52px 2px 0 -6px #fff, -22px 2px 0 -5px #fff,
+    0 10px 16px rgba(0, 0, 0, 0.06);
+}
+.map-clouds .c1 { width: 70px; top: 12%; left: 14%; animation: drift 10s ease-in-out infinite; }
+.map-clouds .c2 { width: 56px; top: 26%; left: 60%; animation: drift 13s ease-in-out infinite reverse; }
+.map-clouds .c3 { width: 86px; top: 46%; left: 38%; animation: drift 16s ease-in-out infinite; }
+
+/* --- 远山（最慢，制造纵深） --- */
+.map-hills-far {
+  position: absolute; left: -10%; right: -10%; top: 26%; height: 42%; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(42% 100% at 18% 100%, #C3DBF4 0 70%, transparent 71%),
+    radial-gradient(52% 100% at 55% 100%, #AAC9EE 0 70%, transparent 71%),
+    radial-gradient(46% 100% at 90% 100%, #CFE3F8 0 70%, transparent 71%);
+}
+/* --- 中景山丘 / 树林（稍快） --- */
+.map-hills-mid {
+  position: absolute; left: -10%; right: -10%; bottom: -8%; height: 30%; z-index: 1; pointer-events: none; opacity: 0.96;
+  background:
+    radial-gradient(52% 100% at 12% 100%, #8FD6A0 0 70%, transparent 71%),
+    radial-gradient(60% 100% at 52% 100%, #74C98B 0 70%, transparent 71%),
+    radial-gradient(50% 100% at 92% 100%, #A0E1AE 0 70%, transparent 71%);
+}
+
+/* --- 飞过的蝴蝶 / 小鸟（轻柔横向飘过） --- */
+.map-flyers { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.butterfly, .bird { position: absolute; will-change: transform; }
+.butterfly { font-size: 22px; animation: flyX 17s linear infinite; }
+.butterfly.b1 { top: 30%; left: -10%; }
+.butterfly.b2 { top: 56%; left: -10%; animation-duration: 23s; animation-delay: -7s; }
+.bird { top: 18%; left: -10%; font-size: 26px; animation: flyX 27s linear infinite; animation-delay: -13s; }
+@keyframes flyX {
+  0%   { transform: translateX(-12vw) translateY(0); }
+  50%  { transform: translateX(55vw) translateY(-22px); }
+  100% { transform: translateX(120vw) translateY(0); }
+}
+
+/* --- 弯曲地图路径（3D 石板路：暗色侧边 + 投影） --- */
+.map-road { position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; overflow: visible; }
+.road-edge { stroke: #B98C52; stroke-width: 42; stroke-linecap: round; stroke-linejoin: round; transform: translateY(6px); }
+.road-base { stroke: #EAC89C; stroke-width: 34; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 8px 6px rgba(0,0,0,.18)); }
+.road-dash { stroke: #FFF6E6; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 2 18; opacity: .85; }
+
+/* --- 路旁装饰（近景，随地图滚动） --- */
+.map-decor { position: absolute; z-index: 1; pointer-events: none; user-select: none; filter: drop-shadow(0 5px 3px rgba(0,0,0,.22)); }
+.map-decor.d-flower { animation: sway 3.6s ease-in-out infinite; transform-origin: bottom center; }
+.map-decor.d-tree { animation: floaty 5s ease-in-out infinite; }
+@keyframes sway { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+
+/* --- 汉字方块：卡通立体（厚边 + 高光 + 落地阴影） --- */
+.hz-tile { border: 4px solid #fff; }
+.tile-shadow {
+  position: absolute; left: 12%; right: 12%; bottom: -16px; height: 16px; z-index: -1;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.28), transparent 72%);
+  filter: blur(2px);
+}
+.is-locked { filter: saturate(0.82) brightness(0.97); }
+
+/* 当前字块：柔和金色呼吸光圈（地图主角目标点） */
+.tile-halo {
+  position: absolute; inset: -18px; border-radius: 50%; z-index: -2;
+  background: radial-gradient(circle, rgba(255, 214, 102, 0.7) 0%, rgba(255, 214, 102, 0.28) 45%, transparent 70%);
+  animation: halo 2.4s ease-in-out infinite;
+}
+@keyframes halo { 0%, 100% { transform: scale(0.92); opacity: .7; } 50% { transform: scale(1.12); opacity: 1; } }
+
+/* 已学字块：小标记（星星 / 旗帜 / 脚印） */
+.tile-badge { position: absolute; top: -16px; right: -12px; font-size: 20px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
+
+/* 未解锁字块：角落小锁 */
+.tile-lock { position: absolute; top: -10px; left: -10px; font-size: 15px; opacity: .9; }
+
+/* --- 前景草地（固定，强化近大远小的纵深） --- */
+.map-fore {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 14%; z-index: 15; pointer-events: none;
+  background: linear-gradient(180deg, rgba(120,200,110,0) 0%, #7CC96A 55%, #5FB84E 100%);
+  border-radius: 50% 50% 0 0 / 16% 16% 0 0;
+  box-shadow: 0 -6px 14px rgba(0,0,0,.12);
+}
+.map-fore .bush { position: absolute; bottom: 16%; font-size: 40px; filter: drop-shadow(0 4px 2px rgba(0,0,0,.2)); }
+.map-fore .bush.l { left: 2%; }
+.map-fore .bush.r { right: 2%; transform: scaleX(-1); }
 
 

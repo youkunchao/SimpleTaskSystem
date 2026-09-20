@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api.js';
 import Icon from '../components/Icon.jsx';
 import AudioReader from '../components/AudioReader.jsx';
+import { useLandscape } from '../hooks/useLandscape.js';
 import HanziStudy from '../components/HanziStudy.jsx';
 import HanziMap from '../components/HanziMap.jsx';
 import { useQuiz } from '../hooks/useQuiz.js';
@@ -51,6 +52,7 @@ export default function Characters() {
   // 答题节奏统一由 useQuiz 控制：答对自动推进，答错停下等孩子决定
   const quiz = useQuiz({ resetKey: view === 'reading' ? 'reading' : 'learn', initialMode: 'learn' });
   const { idx, mode, testAnswer } = quiz;
+  const landscape = useLandscape();
 
   // 上报答题结果；答题节奏由 useQuiz 控制，这里不碰作答状态
   const submitAnswer = async (module, item, correct, question, userAns, correctAns, explanation) => {
@@ -149,6 +151,8 @@ export default function Characters() {
               correctIndex={curRead.answer}
               status={testAnswer}
               disabled={testAnswer !== null}
+              twoCol={landscape}
+              compact={landscape}
               onSelect={(i) => handleAnswer('chinese-reading', curRead, i === curRead.answer, false, readings.length, 'test', curRead.question, readOptions[i], readOptions[curRead.answer], '')}
               footer={testAnswer === true ? (
                 <div className="text-xl font-bold text-center mt-4 text-kid-green">

@@ -8,20 +8,46 @@ const BLOCK = 84;        // 汉字方块边长
 const CIRCLE = 62;       // 练习圆点直径
 const PAD = 56;          // 轨道两端留白，保证首尾节点也能滚到中间
 const BUFFER = 4;        // ★懒加载：可视区域前后各额外渲染 4 个节点
-const WAVE = 20;         // 垂直于行进方向的轻微起伏，像一条小路
+const WAVE = 40;         // 路径弯曲幅度，让小路像游戏里的蜿蜒小道
 const OVER_DAMP = 0.35;  // 拖出边界后的阻尼系数（橡皮筋手感）
 const FRICTION = 0.94;   // 松手后惯性每帧衰减系数
 const MIN_SPEED = 0.02;  // 惯性停止阈值（px/ms）
 const CLICK_SLOP = 6;    // 位移小于该值才算点击，用于区分"拖拽"和"点击"
 
-// 方块配色：已完成绿 / 当前橙黄 / 未解锁蓝
+// 方块配色：已完成绿 / 当前橙黄 / 未解锁蓝（加厚立体边 + 落地投影，像立在地面上的积木）
 const CUBE = {
-  done: { background: 'linear-gradient(180deg,#9BEA86,#4FC437)', boxShadow: 'inset 0 3px 0 rgba(255,255,255,.75), 0 7px 0 #349125' },
-  current: { background: 'linear-gradient(180deg,#FFE27A,#FFB01F)', boxShadow: 'inset 0 3px 0 rgba(255,255,255,.85), 0 7px 0 #D08407' },
-  locked: { background: 'linear-gradient(180deg,#7CC3FF,#3C82EE)', boxShadow: 'inset 0 3px 0 rgba(255,255,255,.75), 0 7px 0 #2757B8' },
+  done: { background: 'linear-gradient(180deg,#9BEA86,#4FC437)', boxShadow: 'inset 0 4px 0 rgba(255,255,255,.8), 0 10px 0 #2E7D1E, 0 16px 12px rgba(0,0,0,.22)' },
+  current: { background: 'linear-gradient(180deg,#FFE27A,#FFB01F)', boxShadow: 'inset 0 4px 0 rgba(255,255,255,.85), 0 10px 0 #C9760A, 0 16px 12px rgba(0,0,0,.22)' },
+  locked: { background: 'linear-gradient(180deg,#7CC3FF,#3C82EE)', boxShadow: 'inset 0 4px 0 rgba(255,255,255,.8), 0 10px 0 #244FA0, 0 16px 12px rgba(0,0,0,.22)' },
 };
 // 练习节点（蓝色圆形）
-const PRACTICE = { background: 'linear-gradient(180deg,#7CC7FF,#3E8FE0)', boxShadow: '0 4px 0 #2B6FB5' };
+const PRACTICE = { background: 'linear-gradient(180deg,#7CC7FF,#3E8FE0)', boxShadow: '0 10px 0 #2B6FB5, 0 16px 12px rgba(0,0,0,.22)' };
+
+// 路旁装饰（近景，随地图滚动，移动最快）
+const DECOR = [
+  { icon: '🌸', cls: 'd-flower', size: 30 },
+  { icon: '🌳', cls: 'd-tree', size: 42 },
+  { icon: '🍄', cls: 'd-mush', size: 26 },
+  { icon: '🌿', cls: 'd-grass', size: 26 },
+  { icon: '🐰', cls: 'd-bunny', size: 30 },
+  { icon: '🌼', cls: 'd-flower', size: 28 },
+];
+// 已学字块的小标记（星星 / 旗帜 / 脚印）
+const BADGE = ['⭐', '🚩', '🐾'];
+
+// 由一串点生成平滑的曲线路径（二次贝塞尔，穿过每个节点中心）
+function smoothPath(pts) {
+  if (pts.length < 2) return pts.length ? `M ${pts[0][0]} ${pts[0][1]}` : '';
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const [x, y] = pts[i];
+    const [nx, ny] = pts[i + 1];
+    d += ` Q ${x} ${y} ${(x + nx) / 2} ${(y + ny) / 2}`;
+  }
+  const last = pts[pts.length - 1];
+  d += ` L ${last[0]} ${last[1]}`;
+  return d;
+}
 
 /**
  * 汉字轨道地图（自适应方向）
@@ -59,6 +85,7 @@ export default function HanziMap({
   const winRef = useRef(null);
   const [viewport, setViewport] = useState(0);   // 可视窗口沿轴方向的尺寸
   const [scroll, setScroll] = useState(0);       // 已滚动的距离（0 = 起点）
+  const [crossSize, setCrossSize] = useState(360); // 垂直轴（屏幕宽/高）的尺寸，用于路径与节点横向定位
   const [dragging, setDragging] = useState(false);
   const drag = useRef({ active: false, start: 0, startScroll: 0, lastT: 0, vel: 0, moved: 0 });
   const raf = useRef(0);
@@ -72,7 +99,9 @@ export default function HanziMap({
     if (!el) return;
     const measure = () => {
       const size = isX ? el.clientWidth : el.clientHeight;
+      const cross = isX ? el.clientHeight : el.clientWidth;
       setViewport(size);
+      setCrossSize(cross);
       setScroll((s) => Math.min(s, Math.max(0, trackTotal - size)));
     };
     measure();
@@ -179,14 +208,49 @@ export default function HanziMap({
   const innerStyle = isX
     ? { width: trackTotal, height: '100%', transform: `translateX(${-scroll}px)`, transition }
     : { width: '100%', height: trackTotal, transform: `translateY(${-scroll}px)`, transition };
-  const pathStyle = isX
-    ? { left: 0, top: '50%', width: trackTotal, height: 26, transform: 'translateY(-50%)' }
-    : { top: 0, left: '50%', height: trackTotal, width: 26, transform: 'translateX(-50%)' };
+  // 视差辅助：根据滚动量给远景层不同的位移比例（近快远慢）
+  const par = (f) => isX
+    ? { transform: `translateX(${-scroll * f}px)` }
+    : { transform: `translateY(${-scroll * f}px)` };
+
+  // 弯曲地图路径：穿过每个节点中心
+  const roadD = useMemo(() => {
+    if (!nodes.length) return '';
+    const pts = nodes.map((n) => {
+      const a = PAD + n.index * SLOT + SLOT / 2;
+      const c = (crossSize || 360) / 2 + Math.sin(n.index * 0.7) * WAVE;
+      return isX ? [a, c] : [c, a];
+    });
+    return smoothPath(pts);
+  }, [nodes, crossSize, isX]);
 
   return (
     <div data-axis={axis}
       className="scene relative overflow-hidden flex flex-col w-full h-[100dvh]"
       style={{ backgroundImage: 'url(/assets/map-scene.png)', backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: 0 }}>
+      {/* 远景：太阳 */}
+      <div className="map-sun" />
+      {/* 远景：天空云朵（卡通蓬松，缓慢飘动 + 轻微视差） */}
+      <div className="map-clouds" style={par(0.10)}>
+        <span className="cloud c1" />
+        <span className="cloud c2" />
+        <span className="cloud c3" />
+      </div>
+      {/* 远山（最慢，制造纵深） */}
+      <div className="map-hills-far" style={par(0.04)} />
+      {/* 中景山丘 / 树林（稍快） */}
+      <div className="map-hills-mid" style={par(0.16)} />
+      {/* 飞过的蝴蝶 / 小鸟（轻柔） */}
+      <div className="map-flyers">
+        <span className="butterfly b1">🦋</span>
+        <span className="butterfly b2">🦋</span>
+        <span className="bird">🐦</span>
+      </div>
+      {/* 前景草地（固定，强化近大远小的纵深） */}
+      <div className="map-fore">
+        <span className="bush l">🌳</span>
+        <span className="bush r">🌲</span>
+      </div>
       <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-emerald-900/10" />
 
       {/* 顶部：返回 + 头像 / 设置 */}
@@ -217,29 +281,58 @@ export default function HanziMap({
         onPointerLeave={onUp} onPointerCancel={onUp}>
         {/* 内部长轨道：整条轨道平移，拖到边界有阻尼回弹；松手后靠 transition 平滑归位 */}
         <div className="track-inner" style={innerStyle}>
-          {/* 草地小径 */}
-          <div className="track-path" style={pathStyle} />
+          {/* 弯曲的地图路径（石板路风）：穿过每个节点中心 */}
+          <svg className="map-road"
+            width={isX ? trackTotal : (crossSize || 360)}
+            height={isX ? (crossSize || 360) : trackTotal}
+            viewBox={`0 0 ${isX ? trackTotal : (crossSize || 360)} ${isX ? (crossSize || 360) : trackTotal}`}
+            preserveAspectRatio="none">
+            <path className="road-edge" d={roadD} fill="none" />
+            <path className="road-base" d={roadD} fill="none" />
+            <path className="road-dash" d={roadD} fill="none" />
+          </svg>
+
+          {/* 路旁装饰（花草 / 树木 / 小动物）：随地图滚动 = 近景，移动最快 */}
+          {visible.map((n) => {
+            const size = n.type === 'char' ? BLOCK : CIRCLE;
+            const a = PAD + n.index * SLOT + SLOT / 2;
+            const c = (crossSize || 360) / 2 + Math.sin(n.index * 0.7) * WAVE;
+            const side = n.index % 2 === 0 ? -1 : 1;
+            const deco = DECOR[n.index % DECOR.length];
+            const dStyle = isX
+              ? { left: a, top: c + side * (size / 2 + 26) }
+              : { top: a, left: c + side * (size / 2 + 26) };
+            return (
+              <span key={'d' + n.key} className={`map-decor ${deco.cls}`}
+                style={{ ...dStyle, fontSize: deco.size }}>{deco.icon}</span>
+            );
+          })}
 
           {/* ★ 这里只渲染 visible（可视区 + 前后各 4 个），而不是全部节点 */}
           {visible.map((n) => {
             const size = n.type === 'char' ? BLOCK : CIRCLE;
-            const along = PAD + n.index * SLOT + (SLOT - size) / 2;   // 沿轴位置
-            const wave = Math.sin(n.index * 0.7) * WAVE;              // 垂直方向轻微起伏
-            const cross = `calc(50% + ${wave}px - ${size / 2}px)`;    // 垂直轴位置
+            const a = PAD + n.index * SLOT + (SLOT - size) / 2;   // 沿轴位置
+            const c = (crossSize || 360) / 2 + Math.sin(n.index * 0.7) * WAVE - size / 2; // 垂直轴位置
             let base, cls = 'track-node ';
+            let status = null;
             if (n.type === 'char') {
-              const status = n.ci < currentIdx ? 'done' : n.ci === currentIdx ? 'current' : 'locked';
+              status = n.ci < currentIdx ? 'done' : n.ci === currentIdx ? 'current' : 'locked';
               base = { ...CUBE[status] };
-              if (status === 'current') cls += 'cube-glow ';   // 当前学习保留发光动画
+              if (status === 'current') cls += 'cube-glow ';   // 当前学习：金色呼吸光圈
+              if (status === 'locked') cls += 'is-locked ';    // 未解锁：轻微灰色锁定
               cls += 'hz-tile';
             } else {
               base = { ...PRACTICE, borderRadius: '50%' };
             }
             const style = isX
-              ? { ...base, width: size, height: size, left: along, top: cross }
-              : { ...base, width: size, height: size, top: along, left: cross };
+              ? { ...base, width: size, height: size, left: a, top: c }
+              : { ...base, width: size, height: size, top: a, left: c };
             return (
               <div key={n.key} className={cls} style={style} onClick={() => onNodeTap(n)}>
+                <span className="tile-shadow" />
+                {status === 'current' && <span className="tile-halo" />}
+                {status === 'done' && <span className="tile-badge">{BADGE[n.ci % BADGE.length]}</span>}
+                {status === 'locked' && <span className="tile-lock">🔒</span>}
                 <span className="text-white font-bold" style={{ fontSize: n.type === 'char' ? 34 : 22 }}>{n.text}</span>
               </div>
             );

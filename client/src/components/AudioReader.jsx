@@ -40,6 +40,8 @@ export default function AudioReader({
   disabled,
   onSelect,
   footer,
+  twoCol = false,
+  compact = false,
 }) {
   const [activeKey, setActiveKey] = useState(null); // 当前正在朗读的项：p-i / q / o-i
   const [playing, setPlaying] = useState(false);
@@ -101,10 +103,10 @@ export default function AudioReader({
   const sentences = splitSentences(passage);
 
   return (
-    <div className="space-y-4">
+    <div className={compact ? 'space-y-2' : 'space-y-4'}>
       {/* 拼音/前置提示：朗读时高亮，帮孩子先听到读音 */}
       {prompt && (
-        <div className={`text-center text-2xl transition ${activeKey === 'prompt' ? 'text-kid-orange font-bold' : 'text-gray-600'}`}>
+        <div className={`text-center ${compact ? '!text-xl' : 'text-2xl'} transition ${activeKey === 'prompt' ? 'text-kid-orange font-bold' : 'text-gray-600'}`}>
           {prompt}
         </div>
       )}
@@ -120,7 +122,7 @@ export default function AudioReader({
 
       {/* 原文：逐句高亮跟读 */}
       {sentences.length > 0 && (
-        <div className="p-4 bg-gray-50 rounded-2xl leading-relaxed text-lg text-gray-700">
+        <div className={`p-4 bg-gray-50 rounded-2xl leading-relaxed text-lg text-gray-700 ${compact ? '!p-3 !text-base' : ''}`}>
           {sentences.map((s, i) => (
             <span key={i} className={activeKey === `p-${i}` ? 'bg-kid-yellow/60 rounded px-0.5 transition' : ''}>
               {s}
@@ -131,13 +133,13 @@ export default function AudioReader({
 
       {/* 题目 */}
       {question && (
-        <div className={`text-lg font-bold mb-3 ${activeKey === 'q' ? 'text-kid-orange' : 'text-gray-800'}`}>
+        <div className={`${compact ? '!text-base' : 'text-lg'} font-bold mb-3 ${activeKey === 'q' ? 'text-kid-orange' : 'text-gray-800'}`}>
           {question}
         </div>
       )}
 
-      {/* 选项：点击作答，朗读全文时整体跟读 */}
-      <div className="space-y-3">
+      {/* 选项：点击作答，朗读全文时整体跟读；横屏可两列排，省高度 */}
+      <div className={twoCol ? 'grid grid-cols-2 gap-2' : 'space-y-3'}>
         {options.map((opt, i) => {
           const isRight = i === correctIndex;
           const optActive = activeKey === `o-${i}`;
@@ -146,7 +148,7 @@ export default function AudioReader({
               key={i}
               onClick={() => onSelect && onSelect(i)}
               disabled={disabled}
-              className={`w-full p-4 text-lg font-bold rounded-2xl border-4 transition text-left ${
+              className={`w-full ${twoCol ? 'p-3 text-base' : 'p-4 text-lg'} font-bold rounded-2xl border-4 transition text-left ${
                 status === null
                   ? 'bg-gray-50 border-gray-200 hover:border-kid-orange'
                   : isRight
