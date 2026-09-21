@@ -58,8 +58,8 @@ function smoothPath(pts) {
  *   所以即使有上千个字也不会一次性渲染卡顿
  */
 export default function HanziMap({
-  chars, currentIdx, onPick, child,
-  onBack, onSettings, onBooks, onReading, onReview, onLibrary,
+  chars, currentIdx, unlockedIdx = currentIdx, onPick, onLockedPick, child,
+  onBack, onSettings, onBooks, onReview, onLibrary,
 }) {
   const landscape = useLandscape();
   const axis = landscape ? 'x' : 'y';      // x=左右移动(横屏)，y=上下移动(竖屏)
@@ -181,8 +181,12 @@ export default function HanziMap({
   /** 点击节点：拖动超过阈值就不算点击 */
   const onNodeTap = (n) => {
     if (drag.current.moved > CLICK_SLOP) return;
-    if (n.type === 'char') onPick && onPick(n.ci);          // 汉字方块 → 单字学习页
-    else onReview && onReview();                            // 练习圆块 → 复习练习页
+    if (n.type === 'char') {
+      if (n.ci > unlockedIdx) { onLockedPick && onLockedPick(); return; } // 未解锁：主线模式不可跳学
+      onPick && onPick(n.ci);                                       // 汉字方块 → 单字学习页
+    } else {
+      onReview && onReview();                                       // 练习圆块 → 复习练习页
+    }
   };
 
   useEffect(() => stopInertia, []);
@@ -196,10 +200,9 @@ export default function HanziMap({
   const visible = nodes.slice(startIdx, endIdx + 1);
 
   // 底部功能入口
-  const action = { books: onBooks, reading: onReading, review: onReview, library: onLibrary };
+  const action = { books: onBooks, review: onReview, library: onLibrary };
   const ACTIONS = [
     { key: 'books', label: '子集绘本', icon: 'book', color: 'text-kid-blue' },
-    { key: 'reading', label: '中文阅读', icon: 'bookText', color: 'text-kid-green' },
     { key: 'review', label: '复习巩固', icon: 'refresh', color: 'text-kid-orange' },
     { key: 'library', label: '字库', icon: 'listChecks', color: 'text-kid-purple' },
   ];

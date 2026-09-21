@@ -19,7 +19,7 @@ db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 // ==================== Schema ====================
-db.exec(`你
+db.exec(`
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,

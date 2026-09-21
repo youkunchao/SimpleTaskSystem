@@ -12,7 +12,11 @@ build/
 
 # 日志
 *.log
+*.err
 npm-debug.log*
+
+# 智能体私有数据（不入库）
+.codebuddy/
 
 # SQLite 数据库及其 WAL/SHM 文件（运行时生成，含用户数据）
 server/data/*.db

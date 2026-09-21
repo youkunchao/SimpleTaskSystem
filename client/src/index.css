@@ -116,6 +116,23 @@ body {
 }
 .wiggle { animation: wiggle 1.8s ease-in-out infinite; }
 
+/* 玩·角色自动动作动画（站立/挥手/走路的活泼感，进入即播放，字未出现） */
+@keyframes play-acting {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  25% { transform: translateY(-16px) rotate(4deg); }
+  50% { transform: translateY(0) rotate(-3deg); }
+  75% { transform: translateY(-9px) rotate(4deg); }
+}
+.play-acting { animation: play-acting 1.5s ease-in-out infinite; }
+
+/* 玩·收尾动画（开心跳一下、转圈后淡出，随即浮现汉字） */
+@keyframes play-ending {
+  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
+  40%  { transform: scale(1.28) rotate(-14deg) translateY(-20px); opacity: 1; }
+  100% { transform: scale(0.55) rotate(10deg); opacity: 0; }
+}
+.play-ending { animation: play-ending 0.85s ease-in-out forwards; }
+
 /* 卡通立体按钮 */
 .btn-3d {
   @apply font-bold rounded-2xl transition-all duration-150 active:translate-y-1 select-none;

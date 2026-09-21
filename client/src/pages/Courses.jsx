@@ -18,6 +18,7 @@ export default function Courses() {
     english: 'from-kid-blue to-kid-purple',
     math: 'from-kid-green to-kid-blue',
     books: 'from-kid-pink to-kid-purple',
+    'chinese-reading': 'from-kid-green to-kid-orange',
   };
 
   return (

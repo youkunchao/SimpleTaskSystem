@@ -14,6 +14,7 @@ import Progress from './pages/Progress.jsx';
 import Rewards from './pages/Rewards.jsx';
 import Settings from './pages/Settings.jsx';
 import ChildrenConfig from './pages/ChildrenConfig.jsx';
+import ChineseReading from './pages/ChineseReading.jsx';
 
 function ProtectedRoute({ children }) {
   const { token } = useAuth();
@@ -102,6 +103,7 @@ export default function App() {
       <Route path="/english" element={<ProtectedRoute><Layout><English /></Layout></ProtectedRoute>} />
       <Route path="/math" element={<ProtectedRoute><Layout><MathGame /></Layout></ProtectedRoute>} />
       <Route path="/books" element={<ProtectedRoute><Layout><Books /></Layout></ProtectedRoute>} />
+      <Route path="/chinese-reading" element={<ProtectedRoute><Layout><ChineseReading /></Layout></ProtectedRoute>} />
       <Route path="/progress" element={<ProtectedRoute><Layout><Progress /></Layout></ProtectedRoute>} />
       <Route path="/rewards" element={<ProtectedRoute><Layout><Rewards /></Layout></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />

@@ -2,29 +2,17 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import api from '../api.js';
+import { buildLesson } from '../utils/lessonContent.js';
 import Icon from '../components/Icon.jsx';
-import AudioReader from '../components/AudioReader.jsx';
-import { useLandscape } from '../hooks/useLandscape.js';
 import HanziStudy from '../components/HanziStudy.jsx';
 import HanziMap from '../components/HanziMap.jsx';
-import { useQuiz } from '../hooks/useQuiz.js';
 
-// 错题本需要覆盖汉字下的所有子模块
-const WRONG_MODULES = 'characters,chinese-reading';
+// 错题本：汉字学习只覆盖汉字本身（中文阅读已独立为单独模块）
+const WRONG_MODULES = 'characters';
 // 汉字地图不再分关：一条连续轨道展示全部汉字，靠懒加载渲染
 const LEARN_SCOPE = 'all';
 
-function DoneCard({ onRestart }) {
-  return (
-    <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
-      <div className="text-6xl mb-3">🎊</div>
-      <h2 className="text-2xl font-bold text-kid-orange mb-4">本级完成！</h2>
-      <button onClick={onRestart} className="btn-kid bg-kid-blue text-white">再来一遍</button>
-    </div>
-  );
-}
-
-// 阅读 / 错题等子页面的返回头
+// 错题 / 字库等子页面的返回头
 function SubHeader({ title, icon, onBack }) {
   return (
     <div className="flex items-center gap-2 mb-1">
@@ -42,19 +30,14 @@ export default function Characters() {
   const { activeChild } = useAuth();
   const navigate = useNavigate();
   const [chars, setChars] = useState([]);
-  const [readings, setReadings] = useState([]);
   const [wrongList, setWrongList] = useState([]);
   // 五步学习：当前学到第几个字、是否学完
   const [studyIdx, setStudyIdx] = useState(0);
   const [studyDone, setStudyDone] = useState(false);
-  // map = 地图选字；study = 五步学习；library = 字库；reading = 中文阅读；wrong = 错题本
+  // map = 地图选字；study = 五步学习；library = 字库；wrong = 错题本
   const [view, setView] = useState('map');
-  // 答题节奏统一由 useQuiz 控制：答对自动推进，答错停下等孩子决定
-  const quiz = useQuiz({ resetKey: view === 'reading' ? 'reading' : 'learn', initialMode: 'learn' });
-  const { idx, mode, testAnswer } = quiz;
-  const landscape = useLandscape();
 
-  // 上报答题结果；答题节奏由 useQuiz 控制，这里不碰作答状态
+  // 上报答题结果
   const submitAnswer = async (module, item, correct, question, userAns, correctAns, explanation) => {
     try {
       await api.post('/progress', {
@@ -64,24 +47,11 @@ export default function Characters() {
     } catch (e) {}
   };
 
-  // 答对自动推进，答错停下来等孩子选择
-  const handleAnswer = (module, item, isRight, hasLearnMode, listLength, nextMode, question, userAns, correctAns, explanation) => {
-    submitAnswer(module, item, isRight, question, userAns, correctAns, explanation);
-    if (isRight) quiz.markCorrect(listLength, nextMode);
-    else quiz.markWrong(hasLearnMode);
-  };
-
   // 一次性加载全部汉字（不分关），地图靠懒加载渲染，1000 字也不卡
   useEffect(() => {
     if (!activeChild) return;
     api.get('/courses/characters').then(r => setChars(r.data)).catch(() => {});
   }, [activeChild]);
-
-  // 中文阅读理解
-  useEffect(() => {
-    if (!activeChild || view !== 'reading') return;
-    api.get('/courses/chinese-reading').then(r => setReadings(r.data)).catch(() => {});
-  }, [view, activeChild]);
 
   // 错题本
   useEffect(() => {
@@ -91,16 +61,24 @@ export default function Characters() {
   }, [view, activeChild]);
 
   const studyChar = chars[studyIdx];
-  const curRead = readings[idx];
 
-  // 五步学习选项：每次换字洗牌一次（从全部汉字里取 4 个）
-  const charOptions = useMemo(() => {
-    if (!studyChar || chars.length < 2) return [];
-    const others = chars.filter(c => c.id !== studyChar.id).sort(() => Math.random() - 0.5).slice(0, 3);
-    return [...others, studyChar].sort(() => Math.random() - 0.5);
-  }, [chars, studyChar?.id]);
+  // 轻提示（解锁规则 / 模式 B 引导）
+  const [toast, setToast] = useState('');
+  const toastTimer = useRef(null);
+  const showToast = (msg) => {
+    setToast(msg);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(''), 2600);
+  };
 
-  const readOptions = useMemo(() => (curRead ? JSON.parse(curRead.options) : []), [curRead]);
+  // 五步内容：用规范生成器为每个字产出 玩/认/说/练/写（仅用已解锁字组题）
+  const lesson = useMemo(() => {
+    if (!studyChar || chars.length === 0) return null;
+    return buildLesson(studyChar, chars, studyIdx);
+  }, [chars, studyChar?.id, studyIdx]);
+
+  // 已解锁边界：index <= studyIdx 可正式学习；之后的字需切到「模式 B·自由探索」
+  const unlockedIdx = studyIdx;
 
   // 断点续学：进入时恢复上次学到的第几个字
   const [posReady, setPosReady] = useState(false);
@@ -128,51 +106,6 @@ export default function Characters() {
   }, [studyIdx, posReady, activeChild]);
 
   if (!activeChild) return <p className="text-center text-gray-400 py-10">请先选择孩子</p>;
-
-  // 中文阅读理解
-  if (view === 'reading') {
-    return (
-      <div className="p-4 space-y-4">
-        <SubHeader title="中文阅读" icon="bookText" onBack={() => setView('map')} />
-        {mode === 'done' ? (
-          <DoneCard onRestart={() => quiz.restart('test')} />
-        ) : curRead && (
-          <div className="bg-white rounded-3xl shadow-xl p-6">
-            <div className="flex justify-between mb-3">
-              <span className="bg-kid-orange/10 text-kid-orange px-3 py-1 rounded-full text-sm font-bold">L{curRead.level} 阅读</span>
-              <span className="text-sm text-gray-400">{idx + 1}/{readings.length}</span>
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-3">{curRead.title}</h3>
-            <AudioReader
-              passage={curRead.content}
-              question={curRead.question}
-              options={readOptions}
-              lang="zh-CN"
-              correctIndex={curRead.answer}
-              status={testAnswer}
-              disabled={testAnswer !== null}
-              twoCol={landscape}
-              compact={landscape}
-              onSelect={(i) => handleAnswer('chinese-reading', curRead, i === curRead.answer, false, readings.length, 'test', curRead.question, readOptions[i], readOptions[curRead.answer], '')}
-              footer={testAnswer === true ? (
-                <div className="text-xl font-bold text-center mt-4 text-kid-green">
-                  🎉 答对了！<span className="text-kid-yellow">+2 ⭐</span>
-                </div>
-              ) : testAnswer === false ? (
-                <div className="mt-4 space-y-3">
-                  <div className="text-xl font-bold text-center text-red-500">❌ 正确答案：{readOptions[curRead.answer]}</div>
-                  <div className="flex gap-2 justify-center">
-                    <button onClick={quiz.retry} className="btn-kid bg-kid-yellow text-white">再试一次</button>
-                    <button onClick={() => quiz.goNext(readings.length, 'test')} className="btn-kid bg-kid-blue text-white">下一题</button>
-                  </div>
-                </div>
-              ) : null}
-            />
-          </div>
-        )}
-      </div>
-    );
-  }
 
   // 错题本
   if (view === 'wrong') {
@@ -208,17 +141,26 @@ export default function Characters() {
         <SubHeader title="字库" icon="listChecks" onBack={() => setView('map')} />
         <div className="bg-white rounded-3xl shadow-xl p-4">
           <div className="grid grid-cols-5 gap-2">
-            {chars.map((c, i) => (
-              <button key={c.id} onClick={() => { setStudyIdx(i); setStudyDone(false); setView('study'); }}
-                className={`flex flex-col items-center py-1.5 rounded-xl border-2 transition active:scale-95 ${
-                  i < studyIdx ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-gray-50'
-                }`}>
-                <span className="text-2xl font-bold text-gray-700">{c.hanzi}</span>
-                <span className="text-[10px] text-gray-400">{c.pinyin}</span>
-              </button>
-            ))}
+            {chars.map((c, i) => {
+              const locked = i > unlockedIdx; // 未解锁：主线模式不可正式学习
+              return (
+                <button key={c.id}
+                  onClick={() => locked
+                    ? showToast('正式学习要按顺序解锁哦～想提前看后面的字，请切换到「模式 B·自由探索」')
+                    : (() => { setStudyIdx(i); setStudyDone(false); setView('study'); })()}
+                  className={`flex flex-col items-center py-1.5 rounded-xl border-2 transition active:scale-95 ${
+                    locked
+                      ? 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed'
+                      : i < studyIdx ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-gray-50'
+                  }`}>
+                  <span className={`text-2xl font-bold ${locked ? 'text-gray-400' : 'text-gray-700'}`}>{locked ? '🔒' : c.hanzi}</span>
+                  <span className="text-[10px] text-gray-400">{locked ? '未解锁' : c.pinyin}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
+        {toast && <div className="fixed left-1/2 -translate-x-1/2 bottom-24 z-50 bg-black/80 text-white text-sm rounded-full px-4 py-2 shadow-lg">{toast}</div>}
       </div>
     );
   }
@@ -228,8 +170,7 @@ export default function Characters() {
     return (
       <HanziStudy
         char={studyChar}
-        charOptions={charOptions.map(o => o.hanzi)}
-        correctIndex={charOptions.findIndex(o => o.id === studyChar.id)}
+        lesson={lesson}
         index={studyIdx}
         total={chars.length}
         onSubmit={(ok, userAns, correctAns) => submitAnswer('characters', studyChar, ok, studyChar.pinyin, userAns, correctAns, '')}
@@ -247,18 +188,22 @@ export default function Characters() {
       {!chars.length ? (
         <p className="text-center text-gray-400 py-10">加载中...</p>
       ) : (
-        <HanziMap
-          chars={chars}
-          currentIdx={studyIdx}
-          child={activeChild}
-          onPick={(i) => { setStudyIdx(i); setStudyDone(false); setView('study'); }}
-          onBack={() => navigate('/courses')}
-          onSettings={() => navigate('/settings')}
-          onBooks={() => navigate('/books')}
-          onReading={() => setView('reading')}
-          onReview={() => setView('wrong')}
-          onLibrary={() => setView('library')}
-        />
+        <>
+          <HanziMap
+            chars={chars}
+            currentIdx={studyIdx}
+            unlockedIdx={unlockedIdx}
+            child={activeChild}
+            onPick={(i) => { setStudyIdx(i); setStudyDone(false); setView('study'); }}
+            onLockedPick={() => showToast('正式学习要按顺序解锁哦～想提前看后面的字，请切换到「模式 B·自由探索」')}
+            onBack={() => navigate('/courses')}
+            onSettings={() => navigate('/settings')}
+            onBooks={() => navigate('/books')}
+            onReview={() => setView('wrong')}
+            onLibrary={() => setView('library')}
+          />
+          {toast && <div className="fixed left-1/2 -translate-x-1/2 bottom-24 z-50 bg-black/80 text-white text-sm rounded-full px-4 py-2 shadow-lg">{toast}</div>}
+        </>
       )}
     </div>
   );

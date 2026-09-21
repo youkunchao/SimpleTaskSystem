@@ -1,0 +1,3 @@
+# 预合成音频目录：由 `python server/scripts/gen_tts.py` 生成 mp3 与 manifest.json。
+# key -> 文件名 的映射见 manifest.json；后端 /api/tts 据此返回离线 mp3。
+# 未预生成的文本（动态内容/绘本/跟读）前端自动回退 Web Speech。

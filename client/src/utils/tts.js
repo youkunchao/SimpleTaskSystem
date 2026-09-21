@@ -106,3 +106,40 @@ export function recommendVoiceName(lang, voices = getVoices()) {
 export function isRecommended(lang, name, voices = getVoices()) {
   return !!name && recommendVoiceName(lang, voices) === name;
 }
+
+/* ============================================================
+ * Edge TTS（微软在线神经网络语音）配置
+ * —— 全站朗读 / 本地批量合成的「单一事实来源」。
+ *
+ * 音色按"角色"区分：
+ *  - teach（教学内容）：旁白、讲解、读音示范 → 温暖女声（晓晓）
+ *  - feedback（互动反馈）：答对、答错、引导语 → 活泼女声（晓伊）
+ * 参数：语速 -20%（放慢，适合 4-6 岁）、音调 +10%（略高活泼）、输出 MP3。
+ *
+ * role 取值：'teach' | 'feedback'，默认 'teach'。
+ * ============================================================ */
+export const EDGE_TTS = {
+  // 每种语言下，按角色选择音色（与既有 Web Speech 配置并存，互不干扰）
+  voices: {
+    'zh-CN': {
+      teach: 'zh-CN-XiaoxiaoNeural',   // 教学内容：晓晓
+      feedback: 'zh-CN-XiaoyiNeural',  // 互动反馈：晓伊
+    },
+    'en-US': {
+      teach: 'en-US-AriaNeural',       // 教学：Aria
+      feedback: 'en-US-JennyNeural',    // 反馈：Jenny（活泼）
+    },
+  },
+  // SSML 用的相对语速/音调；'-20%' = 放慢 20%，'+10%' = 调高 10%
+  rate: '-20%',
+  pitch: '+10%',
+  // 输出音频格式（MP3，单声道低码率，体积小、加载快）
+  outputFormat: 'audio-24khz-48kbitrate-mono-mp3',
+};
+
+// 根据角色与语言取 Edge TTS 音色名。
+// role: 'teach'（教学内容）| 'feedback'（互动反馈）；lang 缺省 'zh-CN'。
+export function getEdgeVoice(role = 'teach', lang = 'zh-CN') {
+  const map = EDGE_TTS.voices[lang] || EDGE_TTS.voices['zh-CN'];
+  return (map && map[role]) || (map && map.teach) || 'zh-CN-XiaoxiaoNeural';
+}
