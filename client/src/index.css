@@ -297,4 +297,97 @@ body {
 .map-fore .bush.l { left: 2%; }
 .map-fore .bush.r { right: 2%; transform: scaleX(-1); }
 
+/* ==================== 海洋沉浸式英语模块 ==================== */
+/* 全屏海底场景：铺满背景图 + 渐变叠层保证卡片可读性 */
+.ocean-scene {
+  position: relative;
+  background-color: #0A7BBF;
+  background-image:
+    linear-gradient(180deg, rgba(31, 162, 255, 0.18), rgba(18, 216, 184, 0.12)),
+    url(/assets/english/ocean-bg.png);
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+.ocean-scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(10, 60, 93, 0.04) 0%, rgba(10, 60, 93, 0.28) 100%);
+}
+/* 上浮的气泡装饰 */
+.ocean-bubble {
+  position: absolute;
+  bottom: -12%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.28) 58%, rgba(255, 255, 255, 0) 72%);
+  animation: bubbleRise linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes bubbleRise {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  12%  { opacity: 0.85; }
+  100% { transform: translateY(-118vh) translateX(24px); opacity: 0; }
+}
+/* 玻璃拟态卡片（浮在海面上，圆润可爱） */
+.glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 22px rgba(8, 47, 73, 0.22);
+}
+/* 吉祥物呼吸浮动（复用 floaty，这里仅加尺寸辅助） */
+.mascot {
+  filter: drop-shadow(0 6px 8px rgba(8, 47, 73, 0.28));
+  user-select: none;
+}
+
+/* 数学乐园场景背景（浅色明亮渐变，区别于英语海洋风） */
+.math-scene {
+  background: linear-gradient(160deg, #E0F7FA 0%, #FFF3E0 55%, #FCE4F3 100%);
+}
+
+/* 数学乐园：漂浮装饰 */
+@keyframes mathFloat {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-14px) rotate(6deg); }
+}
+.math-float { animation: mathFloat 4.5s ease-in-out infinite; }
+
+/* 数学讲题：小老师在"说话"（与语音同步的张嘴/点头动画） */
+@keyframes mathSay {
+  0%, 100% { transform: translateY(0) scale(1) rotate(-2deg); }
+  25%      { transform: translateY(-9px) scale(1.08) rotate(2deg); }
+  50%      { transform: translateY(0) scale(0.97) rotate(-2deg); }
+  75%      { transform: translateY(-6px) scale(1.06) rotate(3deg); }
+}
+.math-say { animation: mathSay 0.9s ease-in-out infinite; transform-origin: bottom center; }
+
+/* 讲题卡片出场：从下方轻轻浮起 */
+@keyframes mathStepIn {
+  0%   { opacity: 0; transform: translateY(18px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.math-step-in { animation: mathStepIn 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+
+/* "下一句"按钮提示脉冲（一段讲完后引导孩子点） */
+@keyframes mathNext {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 176, 31, 0.6); }
+  50%      { transform: scale(1.045); box-shadow: 0 0 0 12px rgba(255, 176, 31, 0); }
+}
+.math-next { animation: mathNext 1.4s ease-in-out infinite; }
+
+/* 讲题进度点 */
+.math-dot {
+  @apply h-2.5 rounded-full transition-all duration-300;
+  width: 0.625rem;
+  background: rgba(255, 255, 255, 0.75);
+}
+.math-dot-active {
+  width: 1.75rem;
+  background: #FFB01F;
+}
 

@@ -9,6 +9,8 @@
  * 运行：node server/scripts/gen_phrases.mjs  （需后端在 3001 运行）
  */
 import { buildLesson } from '../../client/src/utils/lessonContent.js';
+import { TOPICS } from '../src/data/math.generated.js';
+import { stripForSpeech } from '../../client/src/utils/mathContent.js';
 
 const CHARS_API = 'http://localhost:3001/api/courses/characters';
 
@@ -46,6 +48,18 @@ async function main() {
     add(`${lesson.know.oral}。${lesson.know.shapeHint}`, 'teach', 'zh-CN'); // 认·听讲解（口语释义+字形提示）
     for (const w of lesson.know.words || []) add(w.word, 'teach', 'zh-CN'); // 认·词组卡片
     if (lesson.speak.sentence) add(lesson.speak.sentence, 'teach', 'zh-CN'); // 说·短句
+  }
+
+  // ===== 数学模块：每个知识点的"讲题"文案（content 分步讲解）=====
+  // 与前端 MathLearnSteps 完全一致：朗读前会 stripForSpeech 剔除 emoji/符号，
+  // 因此这里的 key 也必须用同一处理后的文本，否则 /api/tts 匹配不上会回退 Web Speech。
+  // 全部走 teach（晓晓），与识字/英语教学内容同一音色。
+  for (const t of TOPICS) {
+    const steps = Array.isArray(t.content) ? t.content : [];
+    for (const step of steps) {
+      if (!step || !step.text) continue;
+      add(stripForSpeech(step.text), 'teach', 'zh-CN'); // 讲题：晓晓（teach）
+    }
   }
 
   const phrases = [...map.values()];

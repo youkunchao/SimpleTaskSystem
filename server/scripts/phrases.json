@@ -45904,5 +45904,425 @@
     "role": "teach",
     "lang": "zh-CN",
     "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|小朋友，看这两个苹果：一个大大大，一个小小的。我们叫它“大”和“小”。",
+    "text": "小朋友，看这两个苹果：一个大大大，一个小小的。我们叫它“大”和“小”。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|把大的圈出来，小的指给妈妈看～ 大苹果甜甜的！",
+    "text": "把大的圈出来，小的指给妈妈看～ 大苹果甜甜的！",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|下面来玩比一比：点一点更大的那个吧！",
+    "text": "下面来玩比一比：点一点更大的那个吧！",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|太阳是圆圆的，饼干是方方的，屋顶是尖尖的三角。",
+    "text": "太阳是圆圆的，饼干是方方的，屋顶是尖尖的三角。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|圆圆没有角，方方四个角，三角三个角。",
+    "text": "圆圆没有角，方方四个角，三角三个角。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|下面考考你：点一点圆形！",
+    "text": "下面考考你：点一点圆形！",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|看： 一个红一个白，一直在重复，这就是规律！",
+    "text": "看： 一个红一个白，一直在重复，这就是规律！",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|接下来该是什么？？对，又是红！",
+    "text": "接下来该是什么？？对，又是红！",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|你来接着排：点出下一个颜色。",
+    "text": "你来接着排：点出下一个颜色。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|伸出小手，点一个物件数一个：1、2、3… 不漏也不多。",
+    "text": "伸出小手，点一个物件数一个：1、2、3… 不漏也不多。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|盘子里有几颗糖？ 数一数：1、2、3，三颗糖！",
+    "text": "盘子里有几颗糖？ 数一数：1、2、3，三颗糖！",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|数一数下面有几只小动物，选出正确数字。",
+    "text": "数一数下面有几只小动物，选出正确数字。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|小鸟在树上（上面），小狗在桌子下（下面）。盒子里的球在“里”，外面的在“外”。",
+    "text": "小鸟在树上（上面），小狗在桌子下（下面）。盒子里的球在“里”，外面的在“外”。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|小猫躲在桌子下面，找找看～",
+    "text": "小猫躲在桌子下面，找找看～",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|点一点“上面”的那一个。",
+    "text": "点一点“上面”的那一个。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|上次是，现在更长： 一直红白红白，叫ABAB。",
+    "text": "上次是，现在更长： 一直红白红白，叫ABAB。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|数到第7个是什么颜色？红白红白红白红——是红！",
+    "text": "数到第7个是什么颜色？红白红白红白红——是红！",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|接着排下去，选出正确的下一个。",
+    "text": "接着排下去，选出正确的下一个。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|5颗糖，左手2颗，右手3颗，合起来还是5颗。5=2+3，也会5-2=3。",
+    "text": "5颗糖，左手2颗，右手3颗，合起来还是5颗。5=2+3，也会5-2=3。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|把4分成两份：可以是1和3，也可以是2和2。",
+    "text": "把4分成两份：可以是1和3，也可以是2和2。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|选一选：6可以分成哪两个数？",
+    "text": "选一选：6可以分成哪两个数？",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|皮球是圆滚滚的“球”，积木方块是“正方体”，能稳稳站着。",
+    "text": "皮球是圆滚滚的“球”，积木方块是“正方体”，能稳稳站着。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|球会滚，正方体不会滚——推一推试试！",
+    "text": "球会滚，正方体不会滚——推一推试试！",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|下面哪个是正方体？点一点。",
+    "text": "下面哪个是正方体？点一点。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|两个红两个蓝，是AABB； 三色轮转是ABC。",
+    "text": "两个红两个蓝，是AABB； 三色轮转是ABC。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|ABC模式下一个该什么色？红黄蓝红黄蓝——蓝！",
+    "text": "ABC模式下一个该什么色？红黄蓝红黄蓝——蓝！",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|接着排，选出下一项。",
+    "text": "接着排，选出下一项。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|从1数到20：…18、19、20！数字越来越大。",
+    "text": "从1数到20：…18、19、20！数字越来越大。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|数一数台阶：1、2、…、20，一共20级。",
+    "text": "数一数台阶：1、2、…、20，一共20级。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|选一选：19的下一个数是？",
+    "text": "选一选：19的下一个数是？",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|举起写字的手是右手，另一边是左手。和你面对面时，左右是反的哦。",
+    "text": "举起写字的手是右手，另一边是左手。和你面对面时，左右是反的哦。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|用右手拿勺子，左手扶碗。",
+    "text": "用右手拿勺子，左手扶碗。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|点一点“右边”的小动物。",
+    "text": "点一点“右边”的小动物。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|天平往下沉的那边更重。 比 重，因为多一个。",
+    "text": "天平往下沉的那边更重。 比 重，因为多一个。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|一边放2块糖，一边放1块，2块那边下沉。",
+    "text": "一边放2块糖，一边放1块，2块那边下沉。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|看天平，选出更重的一边。",
+    "text": "看天平，选出更重的一边。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|“3个苹果”里的3是基数（有多少个）；“第3名”的3是序数（排第几）。",
+    "text": "“3个苹果”里的3是基数（有多少个）；“第3名”的3是序数（排第几）。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|队伍里从左数第2个小朋友，戴帽子。",
+    "text": "队伍里从左数第2个小朋友，戴帽子。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|选一选：从左数第3个是哪个？",
+    "text": "选一选：从左数第3个是哪个？",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|加法是合起来：3+2=5（3颗再加2颗，一共5颗）。减法是去掉：5-2=3。",
+    "text": "加法是合起来：3+2=5（3颗再加2颗，一共5颗）。减法是去掉：5-2=3。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|小明有4块糖，吃掉1块，还剩几块？4-1=3。",
+    "text": "小明有4块糖，吃掉1块，还剩几块？4-1=3。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|算一算：6+3=？点出答案。",
+    "text": "算一算：6+3=？点出答案。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|长长方方是长方体，圆圆滚滚是球，上下一样粗能滚是圆柱。",
+    "text": "长长方方是长方体，圆圆滚滚是球，上下一样粗能滚是圆柱。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|牙膏盒像长方体，易拉罐像圆柱。",
+    "text": "牙膏盒像长方体，易拉罐像圆柱。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|下面哪个是圆柱？点一点。",
+    "text": "下面哪个是圆柱？点一点。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|把红色的放一起，蓝色的放一起，这叫“分类”。数一数每类有几个。",
+    "text": "把红色的放一起，蓝色的放一起，这叫“分类”。数一数每类有几个。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|盘子里红红紫：红色2个，紫色1个。",
+    "text": "盘子里红红紫：红色2个，紫色1个。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|数一数红色的有几个？",
+    "text": "数一数红色的有几个？",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|13-5：先把13分成10和3，10-5=5，5+3=8。",
+    "text": "13-5：先把13分成10和3，10-5=5，5+3=8。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|12-4：10-4=6，6+2=8。",
+    "text": "12-4：10-4=6，6+2=8。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|算一算：15-7=？",
+    "text": "算一算：15-7=？",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|十个十是百。35是3个十和5个一。",
+    "text": "十个十是百。35是3个十和5个一。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|数数：…28、29、30，满十进一。",
+    "text": "数数：…28、29、30，满十进一。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|选一选：4个十和6个一是？",
+    "text": "选一选：4个十和6个一是？",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|把正方体的一面印在纸上，得到“正方形”。圆柱滚出的面是“圆”。",
+    "text": "把正方体的一面印在纸上，得到“正方形”。圆柱滚出的面是“圆”。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|窗户是长方形，钟面是圆形。",
+    "text": "窗户是长方形，钟面是圆形。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|下面哪个是三角形？点一点。",
+    "text": "下面哪个是三角形？点一点。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|看数字：2、4、6、8…每次多2；看图形： 重复。",
+    "text": "看数字：2、4、6、8…每次多2；看图形： 重复。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|1、3、5、7，下一个是9（每次+2）。",
+    "text": "1、3、5、7，下一个是9（每次+2）。",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
+  },
+  {
+    "key": "zh-CN|teach|找规律填空：10、20、30、？",
+    "text": "找规律填空：10、20、30、？",
+    "role": "teach",
+    "lang": "zh-CN",
+    "voice": "zh-CN-XiaoxiaoNeural"
   }
 ]

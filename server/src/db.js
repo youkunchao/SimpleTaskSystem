@@ -6,6 +6,12 @@ import bcrypt from 'bcryptjs';
 import { nowLocal, utcOffsetMinutes } from './time.js';
 // 1000 个汉字（20 关 × 50 字），依据人教版识字表由易到难
 import { CHARACTERS } from './data/characters.generated.js';
+// 英语模块词库：年龄段 + 45 个主题 + 361 个单词（含中文讲解与例句）
+import { AGE_GROUPS, CATEGORIES, WORDS as ENGLISH_WORDS } from './data/english.generated.js';
+// 英语单词音标（CMU 词典生成）与音标讲解
+import { PHONETICS } from './data/englishPhonetics.generated.js';
+// 数学课程体系：学段 / 知识点 / 测验 / 能力标签（数据在 math.generated.js 唯一事实源）
+import { STAGES, ABILITY_TAGS, ALL_TOPICS, QUIZZES } from './data/math.generated.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dbPath = join(__dirname, '..', 'data', 'kidstar.db');
@@ -53,8 +59,35 @@ CREATE TABLE IF NOT EXISTS words (
   english TEXT NOT NULL,
   chinese TEXT NOT NULL,
   category TEXT NOT NULL,
-  emoji TEXT
+  emoji TEXT,
+  meaning TEXT,      -- 中文白话释义（孩子能听懂的一句讲解）
+  example_en TEXT,   -- 英文例句
+  example_cn TEXT,   -- 例句的中文翻译
+  phonetic TEXT,     -- 国际音标，如 /ʃɪp/
+  phonetic_tips TEXT -- 音标讲解（JSON 数组：[{sym,tip}]）
 );
+
+-- 英语主题分类（按年龄段划分，如 3-4 岁的「动物」、5-6 岁的「海洋生物」）
+CREATE TABLE IF NOT EXISTS english_categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT NOT NULL UNIQUE,   -- 稳定标识，形如 '3-4:动物'，数据文件与接口都用它对齐
+  age_group TEXT NOT NULL,    -- '3-4' | '4-5' | '5-6' | '6-7' | '7-8'
+  name_cn TEXT NOT NULL,      -- 主题中文名
+  name_en TEXT NOT NULL,      -- 主题英文名
+  icon TEXT,                  -- 插画占位（emoji）
+  sort INTEGER DEFAULT 0
+);
+
+-- 单词与主题的多对多归属：一个词可属于多个主题，但同一主题内只能出现一次
+CREATE TABLE IF NOT EXISTS word_category (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  word_id INTEGER NOT NULL,
+  category_id INTEGER NOT NULL,
+  sort INTEGER DEFAULT 0,
+  FOREIGN KEY (word_id) REFERENCES words(id) ON DELETE CASCADE,
+  FOREIGN KEY (category_id) REFERENCES english_categories(id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_word_cat_unique ON word_category(word_id, category_id);
 
 CREATE TABLE IF NOT EXISTS math_problems (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -192,6 +225,53 @@ CREATE TABLE IF NOT EXISTS chinese_readings (
   options TEXT,
   answer INTEGER NOT NULL,
   level INTEGER DEFAULT 1
+);
+
+-- ==================== 数学课程体系 ====================
+-- 知识点（核心实体）：学段/板块/分步讲解/能力标签/前置依赖
+CREATE TABLE IF NOT EXISTS math_topics (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT NOT NULL UNIQUE,        -- 稳定标识，数据文件与接口都用它对齐
+  stage TEXT NOT NULL,             -- '2-3' | '3-4' | ... | 'grade1'..'grade6'
+  board TEXT NOT NULL,             -- 数与代数 | 图形与几何 | 统计与概率 | 数学思维
+  unit TEXT,                       -- 单元/小节名
+  title TEXT NOT NULL,
+  subtitle TEXT,
+  emoji TEXT,
+  level INTEGER DEFAULT 1,
+  sort INTEGER DEFAULT 0,
+  content TEXT,                    -- JSON: [{type:'explain'|'example'|'guide', text, emoji}]
+  tags TEXT,                       -- JSON 能力标签数组, 如 ["数感","计算熟练度"]
+  prerequisites TEXT,              -- JSON 前置 topic key 数组（冗余，便于前端快速渲染）
+  status TEXT DEFAULT 'seeded'     -- 'seeded' | 'placeholder'
+);
+
+-- 依赖树（可查询，支持级联锁定判断）
+CREATE TABLE IF NOT EXISTS topic_prerequisites (
+  topic_id INTEGER NOT NULL,
+  prereq_id INTEGER NOT NULL,
+  PRIMARY KEY (topic_id, prereq_id),
+  FOREIGN KEY (topic_id) REFERENCES math_topics(id) ON DELETE CASCADE,
+  FOREIGN KEY (prereq_id) REFERENCES math_topics(id) ON DELETE CASCADE
+);
+
+-- 测验题（绑定知识点，支撑按能力标签聚合正确率）
+CREATE TABLE IF NOT EXISTS math_quiz (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  qkey TEXT NOT NULL UNIQUE,       -- 稳定标识，幂等 upsert 用
+  topic_id INTEGER NOT NULL,
+  question TEXT NOT NULL,
+  options TEXT NOT NULL,           -- JSON 数组
+  answer INTEGER NOT NULL,         -- 正确选项索引
+  level INTEGER DEFAULT 1,
+  type TEXT,
+  FOREIGN KEY (topic_id) REFERENCES math_topics(id) ON DELETE CASCADE
+);
+
+-- 能力维度定义（雷达图维度）
+CREATE TABLE IF NOT EXISTS ability_tags (
+  name TEXT PRIMARY KEY,           -- 数感 | 计算熟练度 | 逻辑思维 | 几何空间 | 统计推理
+  dimension TEXT NOT NULL
 );
 `);
 
@@ -337,6 +417,22 @@ const MIGRATIONS = {
     } catch (e) {
       console.warn('⚠️ 复习项存在重复记录，未创建唯一索引：', e.message);
     }
+  },
+
+  // 英语单词补充「中文讲解 + 例句」三列：老库建表时没有，这里补上（幂等）
+  'english-word-explanations': () => {
+    const cols = db.prepare('PRAGMA table_info(words)').all().map((c) => c.name);
+    if (!cols.includes('meaning')) db.exec('ALTER TABLE words ADD COLUMN meaning TEXT');
+    if (!cols.includes('example_en')) db.exec('ALTER TABLE words ADD COLUMN example_en TEXT');
+    if (!cols.includes('example_cn')) db.exec('ALTER TABLE words ADD COLUMN example_cn TEXT');
+    db.exec('CREATE INDEX IF NOT EXISTS idx_english_cat_age ON english_categories(age_group, sort)');
+  },
+
+  // 英语单词补充「音标 + 音标讲解」两列（幂等）
+  'english-word-phonetics': () => {
+    const cols = db.prepare('PRAGMA table_info(words)').all().map((c) => c.name);
+    if (!cols.includes('phonetic')) db.exec('ALTER TABLE words ADD COLUMN phonetic TEXT');
+    if (!cols.includes('phonetic_tips')) db.exec('ALTER TABLE words ADD COLUMN phonetic_tips TEXT');
   },
 };
 
@@ -628,6 +724,145 @@ function seedMoreWords() {
   console.log('✅ 扩充单词分类完成（水果/家具/球类/交通/衣物）');
 }
 
+// ==================== 英语模块：年龄段 + 主题分类 + 单词（含中文讲解） ====================
+// 与汉字一样，以 english.generated.js 为唯一事实源：每次启动对齐一遍（幂等），
+// 改词库只改数据文件。单词按 english 唯一，绝不多行插入（否则 4 选 1 会出现两个相同选项），
+// 一个词属于多个主题由 word_category 映射承载。
+function seedEnglish() {
+  // 1) 主题分类：按 key 幂等 upsert（手写 upsert，不依赖 SQLite 的 ON CONFLICT 版本）
+  const findCat = db.prepare('SELECT id FROM english_categories WHERE key = ?');
+  const insertCat = db.prepare(
+    'INSERT INTO english_categories (key, age_group, name_cn, name_en, icon, sort) VALUES (?, ?, ?, ?, ?, ?)'
+  );
+  const updateCat = db.prepare(
+    'UPDATE english_categories SET age_group = ?, name_cn = ?, name_en = ?, icon = ?, sort = ? WHERE id = ?'
+  );
+  for (const c of CATEGORIES) {
+    const row = findCat.get(c.key);
+    if (row) updateCat.run(c.age, c.name_cn, c.name_en, c.icon, c.sort, row.id);
+    else insertCat.run(c.key, c.age, c.name_cn, c.name_en, c.icon, c.sort);
+  }
+  const catIdByKey = new Map(db.prepare('SELECT id, key FROM english_categories').all().map((r) => [r.key, r.id]));
+  const catNameById = new Map(db.prepare('SELECT id, name_cn FROM english_categories').all().map((r) => [r.id, r.name_cn]));
+
+  // 2) 单词：按 english 唯一 upsert
+  const findWord = db.prepare('SELECT id FROM words WHERE english = ?');
+  const insertWord = db.prepare(
+    'INSERT INTO words (english, chinese, category, emoji, meaning, example_en, example_cn, phonetic, phonetic_tips) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+  const updateWord = db.prepare(
+    'UPDATE words SET chinese = ?, emoji = ?, meaning = ?, example_en = ?, example_cn = ?, phonetic = ?, phonetic_tips = ? WHERE id = ?'
+  );
+  const linkCat = db.prepare('INSERT OR IGNORE INTO word_category (word_id, category_id, sort) VALUES (?, ?, ?)');
+
+  let added = 0, updated = 0;
+  for (const w of ENGLISH_WORDS) {
+    // 主分类只用于老的 /courses/words?category= 兼容；已存在的行保留原 category 不动
+    const primaryName = catNameById.get(catIdByKey.get(w.cats[0])) || w.cats[0];
+    // 音标与音标讲解（由 CMU 词典生成，见 gen_phonetics.mjs）
+    const ph = PHONETICS[w.english];
+    const ipa = ph?.ipa || '';
+    const tipsJson = ph?.tips?.length ? JSON.stringify(ph.tips) : '';
+    const row = findWord.get(w.english);
+    let wordId;
+    if (row) {
+      wordId = row.id;
+      updateWord.run(w.chinese, w.emoji, w.meaning, w.example_en, w.example_cn, ipa, tipsJson, wordId);
+      updated++;
+    } else {
+      const info = insertWord.run(w.english, w.chinese, primaryName, w.emoji, w.meaning, w.example_en, w.example_cn, ipa, tipsJson);
+      wordId = Number(info.lastInsertRowid);
+      added++;
+    }
+    w.cats.forEach((key, i) => {
+      const cid = catIdByKey.get(key);
+      if (cid) linkCat.run(wordId, cid, i + 1);
+    });
+  }
+  console.log(`   英语词库：新增 ${added} 词，同步 ${updated} 词（共 ${ENGLISH_WORDS.length} 词 / ${CATEGORIES.length} 主题 / ${AGE_GROUPS.length} 年龄段）`);
+
+  // 3) 断点续学 scope 迁移：旧的「中文分类名」→ 新的 `cat:<id>`，保住孩子已学到的位置。
+  //    只对名字能对上的分类迁移；对不上的旧 scope 原样保留（新页面用新 key，互不干扰）。
+  const oldScopes = db
+    .prepare("SELECT DISTINCT scope FROM learning_state WHERE module = 'english' AND scope NOT LIKE 'cat:%'")
+    .all();
+  let moved = 0;
+  for (const { scope } of oldScopes) {
+    const cat = db.prepare('SELECT id FROM english_categories WHERE name_cn = ? ORDER BY id LIMIT 1').get(scope);
+    if (!cat) continue;
+    db.prepare('UPDATE OR IGNORE learning_state SET scope = ? WHERE module = ? AND scope = ?')
+      .run(`cat:${cat.id}`, 'english', scope);
+    // 撞上唯一约束（该孩子已存在新 scope）的行直接丢弃，避免留下两份进度
+    db.prepare('DELETE FROM learning_state WHERE module = ? AND scope = ?').run('english', scope);
+    moved++;
+  }
+  if (moved) console.log(`   断点续学 scope 迁移：${moved} 个旧分类位置已迁到新主题`);
+}
+
+// ==================== 数学课程体系（学段/知识点/测验/能力标签）====================
+// 以 math.generated.js 为唯一事实源，每次启动幂等对齐（upsert by key），改数据只改数据文件。
+function seedMath() {
+  // 1) 能力维度
+  const insTag = db.prepare('INSERT OR IGNORE INTO ability_tags (name, dimension) VALUES (?, ?)');
+  ABILITY_TAGS.forEach((t) => insTag.run(t.name, t.dimension));
+
+  // 2) 知识点 upsert（按 key 幂等）
+  const findTopic = db.prepare('SELECT id FROM math_topics WHERE key = ?');
+  const insTopic = db.prepare(
+    'INSERT INTO math_topics (key, stage, board, unit, title, subtitle, emoji, level, sort, content, tags, prerequisites, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+  const updTopic = db.prepare(
+    'UPDATE math_topics SET stage = ?, board = ?, unit = ?, title = ?, subtitle = ?, emoji = ?, level = ?, sort = ?, content = ?, tags = ?, prerequisites = ?, status = ? WHERE key = ?'
+  );
+  for (const t of ALL_TOPICS) {
+    const row = findTopic.get(t.key);
+    const content = JSON.stringify(t.content || []);
+    const tags = JSON.stringify(t.tags || []);
+    const prereqs = JSON.stringify(t.prereqKeys || []);
+    const status = t.status || 'seeded';
+    if (row) {
+      updTopic.run(t.stage, t.board, t.unit, t.title, t.subtitle, t.emoji, t.level, t.sort, content, tags, prereqs, status, t.key);
+    } else {
+      insTopic.run(t.key, t.stage, t.board, t.unit, t.title, t.subtitle, t.emoji, t.level, t.sort, content, tags, prereqs, status);
+    }
+  }
+  const idByKey = new Map(db.prepare('SELECT id, key FROM math_topics').all().map((r) => [r.key, r.id]));
+
+  // 3) 依赖树：先清后插（按 topic 维度，幂等）
+  const delPre = db.prepare('DELETE FROM topic_prerequisites WHERE topic_id = ?');
+  const insPre = db.prepare('INSERT OR IGNORE INTO topic_prerequisites (topic_id, prereq_id) VALUES (?, ?)');
+  for (const t of ALL_TOPICS) {
+    const tid = idByKey.get(t.key);
+    if (!tid) continue;
+    delPre.run(tid);
+    for (const pk of t.prereqKeys || []) {
+      const pid = idByKey.get(pk);
+      if (pid) insPre.run(tid, pid);
+    }
+  }
+
+  // 4) 测验题 upsert（按 qkey 幂等，保证 progress 的 item_id 指向稳定 id）
+  const findQ = db.prepare('SELECT id FROM math_quiz WHERE qkey = ?');
+  const insQ = db.prepare(
+    'INSERT INTO math_quiz (qkey, topic_id, question, options, answer, level, type) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  );
+  const updQ = db.prepare(
+    'UPDATE math_quiz SET topic_id = ?, question = ?, options = ?, answer = ?, level = ?, type = ? WHERE qkey = ?'
+  );
+  for (const q of QUIZZES) {
+    const tid = idByKey.get(q.topicKey);
+    if (!tid) continue;
+    const row = findQ.get(q.qkey);
+    const opts = JSON.stringify(q.options);
+    if (row) {
+      updQ.run(tid, q.question, opts, q.answer, q.level, q.type, q.qkey);
+    } else {
+      insQ.run(q.qkey, tid, q.question, opts, q.answer, q.level, q.type);
+    }
+  }
+  console.log(`✅ 数学体系：知识点 ${ALL_TOPICS.length} 个（含占位），测验 ${QUIZZES.length} 题`);
+}
+
 // 默认演示账号（上线前请删除该函数的调用，或强制首次登录修改密码）
 function seedDefaultUser() {
   const DEFAULT_USERNAME = 'admin';
@@ -644,6 +879,8 @@ migrate();
 seed();
 seedNewModules();
 seedMoreWords();
+seedEnglish();
+seedMath();
 seedDefaultUser();
 
 export default db;

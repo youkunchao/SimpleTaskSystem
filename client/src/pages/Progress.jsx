@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import api from '../api.js';
 import Icon from '../components/Icon.jsx';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { MODULE_LABELS } from '../utils/review.js';
 
 const COLORS = ['#FF8C42', '#60A5FA', '#34D399', '#A78BFA', '#FF6B9D'];
@@ -10,10 +10,12 @@ const COLORS = ['#FF8C42', '#60A5FA', '#34D399', '#A78BFA', '#FF6B9D'];
 export default function Progress() {
   const { activeChild } = useAuth();
   const [data, setData] = useState(null);
+  const [ability, setAbility] = useState([]);
 
   useEffect(() => {
     if (activeChild) {
       api.get(`/progress/${activeChild.id}`).then(res => setData(res.data)).catch(() => {});
+      api.get(`/progress/ability/${activeChild.id}`).then(res => setAbility(res.data || [])).catch(() => {});
     }
   }, [activeChild]);
 
@@ -104,6 +106,31 @@ export default function Progress() {
           ))}
         </div>
         <p className="text-xs text-gray-400 mt-2 text-center">陌生→初识→熟悉→熟练→精通，答对升级、答错重置</p>
+      </div>
+
+      {/* 数学能力雷达：按能力标签维度聚合正确率 */}
+      <div className="bg-white rounded-3xl shadow-lg p-5">
+        <h3 className="text-lg font-bold mb-3 inline-flex items-center gap-2">
+          <Icon name="chart" size={20} className="text-kid-purple" />数学能力雷达
+        </h3>
+        {ability.length === 0 || ability.every((a) => a.total === 0) ? (
+          <p className="text-center text-gray-400 py-6">完成数学测验后，这里会生成能力雷达图～</p>
+        ) : (
+          <>
+            <ResponsiveContainer width="100%" height={260}>
+              <RadarChart data={ability} outerRadius={90}>
+                <PolarGrid />
+                <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 12 }} />
+                <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 10 }} axisLine={false} />
+                <Radar name="正确率" dataKey="accuracy" stroke="#A78BFA" fill="#A78BFA" fillOpacity={0.4} />
+                <Tooltip formatter={(v) => `${v}%`} />
+              </RadarChart>
+            </ResponsiveContainer>
+            <p className="text-center text-xs text-gray-400 mt-1">
+              维度正确率：{ability.filter((a) => a.total > 0).map((a) => `${a.dimension} ${a.accuracy}%`).join(' · ') || '暂无数据'}
+            </p>
+          </>
+        )}
       </div>
 
       {/* 错题统计 */}

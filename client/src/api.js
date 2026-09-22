@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { applyTtsConfig } from './utils/tts.js';
-import { speakEdge, cancelEdge, prefetchEdge, clearEdgeCache } from './utils/edgeTts.js';
+import { speakEdge, speakEdgeLive, cancelEdge, prefetchEdge, clearEdgeCache } from './utils/edgeTts.js';
 
 const api = axios.create({
   baseURL: '/api',
@@ -118,8 +118,14 @@ export function speak(text, lang = 'zh-CN', { onStart, onEnd, role = 'teach' } =
   speakEdge(text, lang, { role, onStart: fireStart, onEnd: fireEnd, alive }).catch((err) => {
     // 已被更新的朗读取代（或被 cancelSpeak 打断）：静默放弃，绝不回退，否则会与新音频叠音
     if (!alive() || (err && err.__superseded)) return;
-    console.warn('[tts] edge-tts 不可用，回退 Web Speech：', err && err.message);
-    webSpeechSpeak(text, lang, { onStart: fireStart, onEnd: fireEnd });
+    // 预合成缺失/失败：先尝试浏览器原生直连微软神经语音（自然语言，晓晓/晓伊），
+    // 仍失败（本机网络被拦/无网）才回退系统 Web Speech，确保"僵硬发音"只作为最后兜底。
+    speakEdgeLive(text, lang, { role, onStart: fireStart, onEnd: fireEnd, alive })
+      .catch((err2) => {
+        if (!alive()) return;
+        console.warn('[tts] edge 实时合成不可用，回退 Web Speech：', err2 && err2.message);
+        webSpeechSpeak(text, lang, { onStart: fireStart, onEnd: fireEnd });
+      });
   });
   return true;
 }

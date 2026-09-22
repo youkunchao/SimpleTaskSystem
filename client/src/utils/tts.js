@@ -57,9 +57,14 @@ export function applyTtsConfig(utter, lang = 'zh-CN') {
   utter.lang = lang;
   utter.rate = typeof s.rate === 'number' ? s.rate : 0.8;
   utter.pitch = typeof s.pitch === 'number' ? s.pitch : 1.15;
-  const name = s.voices && s.voices[lang];
+  const all = getVoices();
+  // 用户未显式选过音色时，自动选用"推荐的温柔自然女声"，避免系统默认机器人音（僵硬）。
+  let name = (s.voices && s.voices[lang]) || '';
+  if (!name) {
+    const rec = recommendVoiceName(lang, all);
+    if (rec) name = rec;
+  }
   if (name) {
-    const all = getVoices();
     // 优先精确匹配语言，再退化为同名即可，找不到就用系统默认
     const match = all.find((v) => v.name === name && v.lang === lang) || all.find((v) => v.name === name);
     if (match) utter.voice = match;
@@ -67,11 +72,11 @@ export function applyTtsConfig(utter, lang = 'zh-CN') {
   return utter;
 }
 
-// 各语言的"推荐人声"偏好：按温柔知性女老师、吐字清楚、四声标准的方向排序。
-// 越靠前越优先；排在后面的多为男声/生硬音色，仅作兜底。
+// 各语言的"推荐人声"偏好：优先自然语言（神经/在线）女声，避免系统默认机器人音。
+// 越靠前越优先；'natural'/'neural' 命中"微软自然语言（神经）"音色，放在最前。
 const PREFER = {
   'zh-CN': [
-    '晓', 'xiaoxiao', 'xiaoyan', 'ting-ting', '婷', 'mei-jia', '美佳',
+    'natural', 'neural', 'xiaoxiao', 'xiaoyan', 'ting-ting', '婷', 'mei-jia', '美佳',
     'yaoyao', '瑶', 'huihui', '慧', 'yue', 'yuyu', 'google 普通话', 'kangkang', 'yunxi',
   ],
   'en-US': [

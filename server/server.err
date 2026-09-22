@@ -13,5 +13,5 @@
  → D:\幼儿识字启蒙教育平台开发\server\node_modules\better-sqlite3\addon-build\debug\install-root\better_sqlite3.node
  → D:\幼儿识字启蒙教育平台开发\server\node_modules\better-sqlite3\addon-build\default\install-root\better_sqlite3.node
  → D:\幼儿识字启蒙教育平台开发\server\node_modules\better-sqlite3\lib\binding\node-v137-win32-x64\better_sqlite3.node），已回退到 Node 内置 node:sqlite
-(node:2676) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:19228) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)

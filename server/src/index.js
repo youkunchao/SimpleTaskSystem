@@ -71,6 +71,20 @@ app.post('/api/tts', (req, res) => {
 // 未匹配的 API 返回 JSON 404，而不是默认的 HTML
 app.use('/api', (req, res) => res.status(404).json({ error: '接口不存在' }));
 
+// —— 生产环境托管前端静态产物（单服务器部署：API + 页面同源，免 CORS、免额外静态服务）——
+const clientDist = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'client', 'dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist, { index: false }));
+  // SPA 回退：非 /api 的 GET 请求都返回 index.html（刷新/深链不会 404）
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+      const indexPath = path.join(clientDist, 'index.html');
+      if (fs.existsSync(indexPath)) return res.sendFile(indexPath);
+    }
+    next();
+  });
+}
+
 // 统一错误处理：任何未捕获异常都返回 JSON，避免前端拿到 HTML 后白屏
 app.use((err, req, res, next) => {
   console.error('[未处理异常]', err);

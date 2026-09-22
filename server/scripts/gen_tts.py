@@ -22,7 +22,8 @@ import os
 import hashlib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PHRASES = os.path.join(HERE, 'phrases.json')
+# 固定文案来自多个生成器：phrases.json（中文识字五步）、phrases_en.json（英语模块）
+PHRASE_FILES = ['phrases.json', 'phrases_en.json']
 OUT_DIR = os.path.join(HERE, '..', 'tts-audio')
 MANIFEST = os.path.join(OUT_DIR, 'manifest.json')
 CONCURRENCY = 12
@@ -33,7 +34,10 @@ def fname(key):
 
 
 async def synth(phrase, path):
-    comm = edge_tts.Communicate(phrase['text'], phrase['voice'])
+    # rate 可选：需要放慢的条目（如英语单词慢速版）单独指定，其余用默认语速
+    rate = phrase.get('rate')
+    comm = edge_tts.Communicate(phrase['text'], phrase['voice'], rate=rate) if rate \
+        else edge_tts.Communicate(phrase['text'], phrase['voice'])
     with open(path, 'wb') as f:
         async for chunk in comm.stream():
             if chunk['type'] == 'audio':
@@ -71,8 +75,19 @@ async def worker(semaphore, queue, manifest, stats):
 
 async def main():
     os.makedirs(OUT_DIR, exist_ok=True)
-    with open(PHRASES, 'r', encoding='utf-8') as f:
-        phrases = json.load(f)
+    phrases = []
+    seen = set()
+    for name in PHRASE_FILES:
+        p = os.path.join(HERE, name)
+        if not os.path.exists(p):
+            continue
+        with open(p, 'r', encoding='utf-8') as f:
+            for item in json.load(f):
+                k = item.get('key')
+                if not k or k in seen:
+                    continue  # 多文件之间按 key 去重，避免重复合成
+                seen.add(k)
+                phrases.append(item)
 
     manifest = {}
     if os.path.exists(MANIFEST):

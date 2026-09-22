@@ -8,10 +8,11 @@ import Home from './pages/Home.jsx';
 import Courses from './pages/Courses.jsx';
 import Characters from './pages/Characters.jsx';
 import English from './pages/English.jsx';
-import MathGame from './pages/MathGame.jsx';
+import Math from './pages/Math.jsx';
 import Books from './pages/Books.jsx';
 import Progress from './pages/Progress.jsx';
 import Rewards from './pages/Rewards.jsx';
+import Review from './pages/Review.jsx';
 import Settings from './pages/Settings.jsx';
 import ChildrenConfig from './pages/ChildrenConfig.jsx';
 import ChineseReading from './pages/ChineseReading.jsx';
@@ -25,9 +26,10 @@ function Layout({ children }) {
   const { activeChild, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  // 识字页：沉浸式全屏（隐藏全局顶栏/底部导航），靠地图自带返回退出
+  // 沉浸式全屏（隐藏全局顶栏/底部导航）：汉字地图与英语海洋学习页都是独立整页，靠页面内自带返回退出
   // 仅在已选孩子、真正进入学习场景时启用；无孩子时保留全局导航，避免"请先选择孩子"页无法跳转
-  const fullscreen = location.pathname === '/characters' && !!activeChild;
+  const fullscreen =
+    (location.pathname === '/characters' || location.pathname === '/english' || location.pathname === '/math') && !!activeChild;
 
   const navItems = [
     { path: '/', label: '首页', icon: 'home' },
@@ -101,11 +103,12 @@ export default function App() {
       <Route path="/children" element={<ProtectedRoute><Layout><ChildrenConfig /></Layout></ProtectedRoute>} />
       <Route path="/characters" element={<ProtectedRoute><Layout><Characters /></Layout></ProtectedRoute>} />
       <Route path="/english" element={<ProtectedRoute><Layout><English /></Layout></ProtectedRoute>} />
-      <Route path="/math" element={<ProtectedRoute><Layout><MathGame /></Layout></ProtectedRoute>} />
+      <Route path="/math" element={<ProtectedRoute><Layout><Math /></Layout></ProtectedRoute>} />
       <Route path="/books" element={<ProtectedRoute><Layout><Books /></Layout></ProtectedRoute>} />
       <Route path="/chinese-reading" element={<ProtectedRoute><Layout><ChineseReading /></Layout></ProtectedRoute>} />
       <Route path="/progress" element={<ProtectedRoute><Layout><Progress /></Layout></ProtectedRoute>} />
       <Route path="/rewards" element={<ProtectedRoute><Layout><Rewards /></Layout></ProtectedRoute>} />
+      <Route path="/review" element={<ProtectedRoute><Layout><Review /></Layout></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

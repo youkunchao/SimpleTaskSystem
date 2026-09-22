@@ -92,7 +92,7 @@ check("other user delete child -> 403/404", r.status === 403 || r.status === 404
 
 // ---------- courses ----------
 r = await call('GET', '/courses');
-check('courses -> 4 modules', r.status === 200 && r.data.modules.length === 4, r.data);
+check('courses -> 5 modules', r.status === 200 && r.data.modules.length === 5, r.data);
 
 for (let lv = 1; lv <= 20; lv++) {
   r = await call('GET', `/courses/characters?level=${lv}`);

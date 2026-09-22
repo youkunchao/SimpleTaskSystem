@@ -19,7 +19,7 @@ function verifyChild(childId, userId) {
 const DETAIL_MAP = {
   characters: { table: 'characters', cols: 'hanzi, pinyin, emoji, meaning' },
   english: { table: 'words', cols: 'english, chinese, emoji' },
-  math: { table: 'math_problems', cols: 'question, options' },
+  math: { table: 'math_quiz', cols: 'question, options' },
   grammar: { table: 'grammar_problems', cols: 'question, options, explanation' },
   listening: { table: 'listening_materials', cols: 'title, content, question' },
   reading: { table: 'reading_materials', cols: 'title, passage, question' },
@@ -165,6 +165,42 @@ router.get('/wrong/:child_id', (req, res) => {
       .all(req.params.child_id);
   }
   res.json(rows);
+});
+
+// 能力雷达：按数学知识点能力标签维度聚合正确率（家长端/进度页雷达图数据源）
+router.get('/ability/:child_id', (req, res) => {
+  const child = verifyChild(req.params.child_id, req.userId);
+  if (!child) return res.status(403).json({ error: '无权操作' });
+
+  // 维度默认全 0，保证雷达图始终有轴
+  const dims = {};
+  db.prepare('SELECT name, dimension FROM ability_tags').all().forEach((t) => {
+    dims[t.dimension] = { dimension: t.dimension, total: 0, correct: 0, accuracy: 0 };
+  });
+
+  const rows = db.prepare(`
+    SELECT mt.tags AS tags, p.correct AS correct
+    FROM progress p
+    JOIN math_quiz mq ON mq.id = p.item_id
+    JOIN math_topics mt ON mt.id = mq.topic_id
+    WHERE p.module = 'math' AND p.child_id = ?
+  `).all(req.params.child_id);
+
+  for (const r of rows) {
+    let tags = [];
+    try { tags = JSON.parse(r.tags || '[]'); } catch { tags = []; }
+    for (const tag of tags) {
+      if (!dims[tag]) dims[tag] = { dimension: tag, total: 0, correct: 0, accuracy: 0 };
+      dims[tag].total += 1;
+      if (r.correct) dims[tag].correct += 1;
+    }
+  }
+
+  const result = Object.values(dims).map((d) => ({
+    ...d,
+    accuracy: d.total ? Math.round((d.correct / d.total) * 100) : 0,
+  }));
+  res.json(result);
 });
 
 // 获取进度统计（注意：此路由须放在 /review 和 /wrong 之后，避免参数冲突）
