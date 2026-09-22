@@ -549,6 +549,25 @@ const MIGRATIONS = {
     console.log(`   汉字配图：需补 ${rows.length} 个，已补 ${filled} 个`);
   },
 
+  // 汉字配图纠错：早期按关键词自动配图时存在语义错配，典型如
+  // "水蜜桃"被"水"规则配成水滴💧、"墨水"配成水滴、"如果"被"果"配成植物🌿。
+  // 这里按字义为已知错配的字重新指定配图（仅覆盖列出的字）。
+  'fix-character-emoji-mismatch': () => {
+    const FIX = {
+      桃: '🍑', 梨: '🍐', 橘: '🍊', 苹: '🍎', 蕉: '🍌', 葡: '🍇', 萄: '🍇',
+      园: '🏞️', 绩: '🏆', 结: '🪢', 如: '📝',
+      饺: '🥟', 墨: '🖋️', 胶: '🧴', 岛: '🏝️', 滩: '🏖️', 洲: '🏝️', 峡: '⛰️',
+      稻: '🌾', 净: '🧼', 脏: '🧹', 边: '↔️', 干: '🏜️',
+      波: '🌊', 浪: '🌊', 莲: '🪷', 荷: '🪷', 桶: '🪣', 深: '📏', 浅: '📏',
+    };
+    const upd = db.prepare('UPDATE characters SET emoji = ? WHERE hanzi = ?');
+    let n = 0;
+    for (const [hanzi, emoji] of Object.entries(FIX)) {
+      n += upd.run(emoji, hanzi).changes;
+    }
+    console.log(`   汉字配图纠错：更新 ${n} 个字`);
+  },
+
   // 汉字配图（第二轮）：补齐上一轮规则未覆盖的虚词与抽象字，目标 100% 无空白
   'enrich-character-emoji-v2': () => {
     const rows = db
@@ -561,6 +580,38 @@ const MIGRATIONS = {
       if (e) { upd.run(e, row.id); filled++; }
     }
     console.log(`   汉字配图(第二轮)：需补 ${rows.length} 个，已补 ${filled} 个`);
+  },
+
+  // 汉字配图（第三轮）：修正 RULES 误配 + 弱配图
+  // 流 被"人流"等关键词误配成站姿小人🧍 → 应为流水💧；
+  // 朋/孩/亲/民/兵 被配成家庭合影👨‍👩‍👧，改为更准确的图。
+  'fix-character-emoji-v3': () => {
+    const FIX = { 流: '💧', 朋: '👫', 孩: '👧', 亲: '👪', 民: '👥', 兵: '🪖' };
+    const upd = db.prepare('UPDATE characters SET emoji = ? WHERE hanzi = ?');
+    let n = 0;
+    for (const [hanzi, emoji] of Object.entries(FIX)) n += upd.run(emoji, hanzi).changes;
+    console.log(`   汉字配图(第三轮)：更新 ${n} 个字`);
+  },
+
+  // 修正错配组词：组词必须包含本字
+  // 预 的组词曾含"准备"（不含预）；随 的组词曾含"跟着"（不含随）
+  'fix-character-words': () => {
+    const FIX = { 预: '预习,预报,预计', 随: '随便,随时,随和' };
+    const upd = db.prepare('UPDATE characters SET words = ? WHERE hanzi = ?');
+    let n = 0;
+    for (const [hanzi, words] of Object.entries(FIX)) n += upd.run(words, hanzi).changes;
+    console.log(`   汉字组词修正：更新 ${n} 个字`);
+  },
+
+  // 汉字配图（第四轮）：修正 RULES 误配且 CURATED 无法覆盖（因非空）的字
+  // 汗 被误配成站姿小人🧍 → 汗珠💧；炒 被误配成草本🌿 → 炒锅🍳；
+  // 泪 用眼睛👁️ 偏弱 → 泪滴💧；弟 旧 RULES 写入🧒 应改回 CURATED 的👶(幼弟)。
+  'fix-character-emoji-v4': () => {
+    const FIX = { 汗: '💧', 泪: '💧', 炒: '🍳', 弟: '👶' };
+    const upd = db.prepare('UPDATE characters SET emoji = ? WHERE hanzi = ?');
+    let n = 0;
+    for (const [hanzi, emoji] of Object.entries(FIX)) n += upd.run(emoji, hanzi).changes;
+    console.log(`   汉字配图(第四轮)：更新 ${n} 个字`);
   },
 };
 
