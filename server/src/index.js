@@ -3,7 +3,13 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+// 注意 import 顺序即求值顺序：先做安全配置校验，再初始化数据库，
+// 保证"生产配置不合规"时立刻失败，而不是跑完耗时的数据初始化才报错。
+import { assertProductionConfig } from './config.js';
 import './db.js';
+
+// 启动期安全校验：生产环境缺少必要配置直接终止，避免"带着不安全的默认值上线"
+assertProductionConfig();
 import authRoutes from './routes/auth.js';
 import childrenRoutes from './routes/children.js';
 import coursesRoutes from './routes/courses.js';
@@ -87,6 +93,14 @@ if (fs.existsSync(clientDist)) {
 
 // 统一错误处理：任何未捕获异常都返回 JSON，避免前端拿到 HTML 后白屏
 app.use((err, req, res, next) => {
+  // 请求体超限 / 格式错误属于"客户端错误"，不能一律报成 500
+  // （否则看起来像服务器故障，也便于调用方区分处理方式）
+  if (err?.status === 413 || err?.type === 'entity.too.large') {
+    return res.status(413).json({ error: '请求内容过大' });
+  }
+  if (err?.status === 400 && err?.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: '请求格式错误' });
+  }
   console.error('[未处理异常]', err);
   res.status(500).json({ error: '服务器内部错误' });
 });

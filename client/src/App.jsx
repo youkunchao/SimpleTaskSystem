@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import Icon from './components/Icon.jsx';
@@ -6,11 +6,13 @@ import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Home from './pages/Home.jsx';
 import Courses from './pages/Courses.jsx';
-import Characters from './pages/Characters.jsx';
+// 汉字模块（含 hanzi-writer 笔顺数据）与进度模块（含 recharts 图表）体积较大，
+// 改为路由级懒加载：首屏不必下载，只有真正进入时才加载，优化移动端弱网体验。
+const Characters = React.lazy(() => import('./pages/Characters.jsx'));
 import English from './pages/English.jsx';
 import Math from './pages/Math.jsx';
 import Books from './pages/Books.jsx';
-import Progress from './pages/Progress.jsx';
+const Progress = React.lazy(() => import('./pages/Progress.jsx'));
 import Rewards from './pages/Rewards.jsx';
 import Review from './pages/Review.jsx';
 import Settings from './pages/Settings.jsx';
@@ -21,6 +23,16 @@ import Badges from './pages/Badges.jsx';
 function ProtectedRoute({ children }) {
   const { token } = useAuth();
   return token ? children : <Navigate to="/login" />;
+}
+
+// 懒加载路由的加载态（保持儿童风格，避免出现生硬的白屏）
+function PageLoading() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 gap-2">
+      <div className="text-5xl floaty">⭐</div>
+      <p className="text-kid-ink/40 text-sm">正在准备…</p>
+    </div>
+  );
 }
 
 function Layout({ children }) {
@@ -138,12 +150,12 @@ export default function App() {
       <Route path="/" element={<ProtectedRoute><Layout><Home /></Layout></ProtectedRoute>} />
       <Route path="/courses" element={<ProtectedRoute><Layout><Courses /></Layout></ProtectedRoute>} />
       <Route path="/children" element={<ProtectedRoute><Layout><ChildrenConfig /></Layout></ProtectedRoute>} />
-      <Route path="/characters" element={<ProtectedRoute><Layout><Characters /></Layout></ProtectedRoute>} />
+      <Route path="/characters" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoading />}><Characters /></Suspense></Layout></ProtectedRoute>} />
       <Route path="/english" element={<ProtectedRoute><Layout><English /></Layout></ProtectedRoute>} />
       <Route path="/math" element={<ProtectedRoute><Layout><Math /></Layout></ProtectedRoute>} />
       <Route path="/books" element={<ProtectedRoute><Layout><Books /></Layout></ProtectedRoute>} />
       <Route path="/chinese-reading" element={<ProtectedRoute><Layout><ChineseReading /></Layout></ProtectedRoute>} />
-      <Route path="/progress" element={<ProtectedRoute><Layout><Progress /></Layout></ProtectedRoute>} />
+      <Route path="/progress" element={<ProtectedRoute><Layout><Suspense fallback={<PageLoading />}><Progress /></Suspense></Layout></ProtectedRoute>} />
       <Route path="/rewards" element={<ProtectedRoute><Layout><Rewards /></Layout></ProtectedRoute>} />
       <Route path="/badges" element={<ProtectedRoute><Layout><Badges /></Layout></ProtectedRoute>} />
       <Route path="/review" element={<ProtectedRoute><Layout><Review /></Layout></ProtectedRoute>} />

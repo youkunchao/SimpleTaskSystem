@@ -7,10 +7,22 @@ import { nowLocal } from '../time.js';
 
 const router = Router();
 
+// 后端必须独立校验账号规则：前端的校验可以被绕过（直接调接口就能注册弱密码账号）
+const USERNAME_MAX = 32;
+const PASSWORD_MIN = 6;
+const PASSWORD_MAX = 128;
+
 router.post('/register', (req, res) => {
-  const { username, password } = req.body;
+  const username = typeof req.body.username === 'string' ? req.body.username.trim() : '';
+  const password = typeof req.body.password === 'string' ? req.body.password : '';
   if (!username || !password) {
     return res.status(400).json({ error: '用户名和密码不能为空' });
+  }
+  if (username.length > USERNAME_MAX) {
+    return res.status(400).json({ error: `用户名最长 ${USERNAME_MAX} 个字符` });
+  }
+  if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
+    return res.status(400).json({ error: `密码长度需为 ${PASSWORD_MIN}-${PASSWORD_MAX} 位` });
   }
   const exists = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
   if (exists) {

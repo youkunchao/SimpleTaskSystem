@@ -1,17 +1,8 @@
 import jwt from 'jsonwebtoken';
-
-// 密钥解析：生产环境必须显式配置 JWT_SECRET，
-// 否则任何人都能用源码里的默认值伪造 token，直接越权访问所有用户数据。
-function resolveSecret() {
-  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('生产环境必须设置 JWT_SECRET 环境变量');
-  }
-  console.warn('⚠️  未设置 JWT_SECRET，当前使用开发用密钥，切勿用于生产环境');
-  return 'kidstar-dev-only-secret';
-}
-
-const JWT_SECRET = resolveSecret();
+// 密钥统一由 config.js 解析并在启动期校验：
+//  - 生产环境缺失 JWT_SECRET → 直接拒绝启动（不再有任何内置默认密钥）
+//  - 开发环境 → 使用本机持久化的随机密钥，而不是源码里的固定常量
+import { JWT_SECRET } from '../config.js';
 
 export function generateToken(userId) {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
