@@ -14,9 +14,9 @@ const UI = process.env.UI_BASE || 'http://localhost:3001';
 const API = process.env.API_BASE || 'http://localhost:3001/api';
 const lines = [];
 let failures = 0;
-function check(name, ok, detail) {
-  if (ok) lines.push(`[PASS] ${name}`);
-  else { failures++; lines.push(`[FAIL] ${name} :: ${JSON.stringify(detail).slice(0, 200)}`); }
+function check(name, message, ok, detail) {
+  if (ok) lines.push(`[PASS] ${name} ${message}`);
+  else { failures++; lines.push(`[FAIL] ${name} ${message} :: ${JSON.stringify(detail).slice(0, 200)}`); }
 }
 function info(name, value) { lines.push(`[INFO] ${name} = ${value}`); }
 
@@ -199,14 +199,18 @@ info('--- G) 功能点全覆盖 ---');
   }
   const afterTxt = await page.locator('#root').innerText();
   check('G1-ADD', 'UI 添加孩子后出现"测试二娃"', /测试二娃/.test(afterTxt), { has: /测试二娃/.test(afterTxt) });
-  // 删除刚添加的孩子（找到含"测试二娃"的删除按钮）
-  const delBtn = page.locator('div:has-text("测试二娃") button:has-text("删除")').first();
+  // 删除刚添加的孩子：定位"测试二娃"名称所在卡片内的删除按钮，避免误删主孩子
+  const card = page.getByText('测试二娃', { exact: true }).locator('xpath=parent::div');
+  const delBtn = card.locator('button', { hasText: '删除' });
   if (await delBtn.count()) {
     await delBtn.click({ timeout: 5000 }).catch(() => {});
     await page.waitForTimeout(500);
   }
   const afterDel = await page.locator('#root').innerText();
   check('G1-DEL', 'UI 删除孩子后"测试二娃"消失', !/测试二娃/.test(afterDel), { has: /测试二娃/.test(afterDel) });
+  // 守卫：主孩子(初始 child.id)必须仍在，未被误删
+  const childrenList = (await api('GET', '/children', token)).data || [];
+  check('G1-KEEP', `主孩子 ${child.id} 未被误删`, childrenList.some(c => c.id === child.id), { ids: childrenList.map(c => c.id) });
 
   // G2) 设置页渲染（朗读人声/语速）
   await page.goto(UI + '/settings', { waitUntil: 'domcontentloaded' });
@@ -224,10 +228,10 @@ info('--- G) 功能点全覆盖 ---');
     // 点击第一本书卡片打开详情
     await page.locator('button, div[role="button"]').filter({ hasText: b.title || '' }).first().click({ timeout: 4000 }).catch(() => {});
     await page.waitForTimeout(500);
-    const readBefore = (await api('GET', `/rewards/${child.id}`, token)).data.books_read || 0;
+    const readBefore = (await api('GET', `/rewards/${child.id}`, token)).data.stats?.books_read || 0;
     const pr = await api('POST', '/progress', token, { child_id: child.id, module: 'books', item_id: b.id, correct: true, duration: 30 });
     check('G3-READ-POST', '绘本阅读进度写入 200', pr.status === 200, pr.status);
-    const readAfter = (await api('GET', `/rewards/${child.id}`, token)).data.books_read || 0;
+    const readAfter = (await api('GET', `/rewards/${child.id}`, token)).data.stats?.books_read || 0;
     check('G3-READ-INC', `books_read 递增(${readBefore}→${readAfter})`, readAfter === readBefore + 1, { readBefore, readAfter });
   }
 
@@ -239,28 +243,30 @@ info('--- G) 功能点全覆盖 ---');
   const cnTxt = await page.locator('#root').innerText();
   check('G4-CN-UI', '中文阅读页渲染', cnTxt.length > 0, { len: cnTxt.length });
   if (readings.length) {
-    const cnBefore = (await api('GET', `/rewards/${child.id}`, token)).data.chinese_mastered || 0;
-    const pr = await api('POST', '/progress', token, { child_id: child.id, module: 'chinese', item_id: readings[0].id, correct: true, duration: 30 });
-    const cnAfter = (await api('GET', `/rewards/${child.id}`, token)).data.chinese_mastered || 0;
+    const cnBefore = (await api('GET', `/rewards/${child.id}`, token)).data.stats?.chinese_mastered || 0;
+    const pr = await api('POST', '/progress', token, { child_id: child.id, module: 'chinese-reading', item_id: readings[0].id, correct: true, duration: 30 });
+    const cnAfter = (await api('GET', `/rewards/${child.id}`, token)).data.stats?.chinese_mastered || 0;
     check('G4-CN-INC', `chinese_mastered 递增(${cnBefore}→${cnAfter})`, cnAfter === cnBefore + 1, { cnBefore, cnAfter });
   }
 
-  // G5) 复习答题流程：先造错题→进入复习队列→连对5次→review_mastered 递增且队列清空
-  const revBefore = (await api('GET', `/rewards/${child.id}`, token)).data.review_mastered || 0;
-  // 一道错题（英语）进入复习队列
-  await api('POST', '/progress', token, { child_id: child.id, module: 'english', item_id: 88801, correct: false, duration: 5 });
+  // G5) 复习答题流程：用真实汉字 id 造错题→进入复习队列→连对5次→review_mastered 递增且队列清空
+  const chars = (await api('GET', '/courses/characters', token)).data || [];
+  const revItemId = chars.length ? chars[0].id : 1;
+  const revBefore = (await api('GET', `/rewards/${child.id}`, token)).data.stats?.review_mastered || 0;
+  // 一道错题进入复习队列（模块 characters，真实 id，确保 fetchDetail 能取到内容）
+  await api('POST', '/progress', token, { child_id: child.id, module: 'characters', item_id: revItemId, correct: false, duration: 5 });
   const q1raw = (await api('GET', `/progress/review/${child.id}`, token)).data;
   const queue1 = Array.isArray(q1raw) ? q1raw : [];
-  check('G5-QUEUE', '错题进入复习队列', queue1.some(q => q.module === 'english' && q.item_id === 88801), { n: queue1.length, rawType: typeof q1raw });
+  check('G5-QUEUE', '错题进入复习队列', queue1.some(q => q.module === 'characters' && q.item_id === revItemId), { n: queue1.length, isArray: Array.isArray(q1raw) });
   // 连对 5 次（level 0→4 精通）
   for (let i = 0; i < 5; i++) {
-    await api('POST', '/progress', token, { child_id: child.id, module: 'english', item_id: 88801, correct: true, duration: 5 });
+    await api('POST', '/progress', token, { child_id: child.id, module: 'characters', item_id: revItemId, correct: true, duration: 5 });
   }
-  const revAfter = (await api('GET', `/rewards/${child.id}`, token)).data.review_mastered || 0;
+  const revAfter = (await api('GET', `/rewards/${child.id}`, token)).data.stats?.review_mastered || 0;
   check('G5-MASTER', `review_mastered 递增(${revBefore}→${revAfter})`, revAfter === revBefore + 1, { revBefore, revAfter });
   const q2raw = (await api('GET', `/progress/review/${child.id}`, token)).data;
   const queue2 = Array.isArray(q2raw) ? q2raw : [];
-  check('G5-CLEAR', '精通后该错题移出复习队列', !queue2.some(q => q.module === 'english' && q.item_id === 88801), { n: queue2.length, rawType: typeof q2raw });
+  check('G5-CLEAR', '精通后该错题移出复习队列', !queue2.some(q => q.module === 'characters' && q.item_id === revItemId), { n: queue2.length, isArray: Array.isArray(q2raw) });
 
   // G6) 数学题目/测验：UI 渲染 + API 取题
   await page.goto(UI + '/math', { waitUntil: 'domcontentloaded' });
@@ -307,6 +313,99 @@ info('--- G) 功能点全覆盖 ---');
   const afterSpeak = await page.locator('#root').innerText().catch(() => '');
   check('G8-TTS', '触发朗读后页面不崩溃', afterSpeak.length > 0 && errors.length === 0, errors.slice(0, 2));
   check('G-FUNCTIONAL', '功能点全覆盖无致命异常', errors.length === 0, errors.slice(0, 3));
+  await ctx.close();
+}
+
+// ---------- H) 流畅度 / 性能指标（确保运行丝滑）----------
+info('--- H) 流畅度/性能 ---');
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+  const pageErrs = [], failedReq = [];
+  page.on('pageerror', e => pageErrs.push(String(e)));
+  page.on('requestfailed', r => failedReq.push(`${r.url()} :: ${r.failure()?.errorText}`));
+  page.on('console', m => { if (m.type() === 'error') pageErrs.push('console:' + m.text()); });
+  await setupSession(page);
+
+  // 等待 #root 渲染出内容（正确传递 timeout 到 options 第三参）
+  const waitContent = async (pg, timeout = 8000) => {
+    try { await pg.waitForFunction(() => (document.querySelector('#root')?.innerText?.length || 0) > 50, undefined, { timeout }); return true; }
+    catch { return false; }
+  };
+
+  // H1) 关键接口响应耗时（阈值 800ms）
+  const timedApi = async (method, path, tk, body) => {
+    const t0 = performance.now();
+    const r = await api(method, path, tk, body);
+    return { ms: Math.round(performance.now() - t0), status: r.status };
+  };
+  const apis = [
+    ['GET', '/courses', null], ['GET', `/rewards/${child.id}`, token],
+    ['GET', `/progress/${child.id}`, token], ['GET', '/courses/characters', token],
+    ['GET', '/courses/books', token], ['GET', '/courses/chinese-reading', token],
+  ];
+  let apiMax = 0;
+  for (const [m, p, tk] of apis) {
+    const r = await timedApi(m, p, tk);
+    apiMax = Math.max(apiMax, r.ms);
+    check(`H-API-${p}`, `接口 ${p} 响应 <=800ms (${r.ms}ms)`, r.status === 200 && r.ms <= 800, { ms: r.ms, status: r.status });
+  }
+  info('API-最大耗时', `${apiMax}ms`);
+
+  // H2) 冷启动深链渲染耗时（含懒加载 chunk）
+  const measureRender = async (route) => {
+    const t0 = Date.now();
+    await page.goto(UI + route, { waitUntil: 'domcontentloaded' });
+    const ok = await waitContent(page, 8000);
+    const ms = Date.now() - t0;
+    const pass = ok && ms <= 4000;
+    if (!ok) {
+      const txt = await page.locator('#root').innerText().catch(() => '(err)');
+      info('DBG-' + route + '-text', JSON.stringify(txt.slice(0, 80)));
+      info('DBG-' + route + '-errs', JSON.stringify(pageErrs.slice(-3)));
+      info('DBG-' + route + '-reqfail', JSON.stringify(failedReq.slice(-3)));
+    }
+    check(`H-RENDER-${route}`, `路由 ${route} 渲染 <=4000ms (${ms}ms)`, pass, { ms, ok });
+    return ms;
+  };
+  const renders = {};
+  for (const r of ['/', '/characters', '/progress', '/rewards', '/books', '/chinese-reading']) {
+    renders[r] = await measureRender(r);
+    info('RENDER' + r, renders[r] + 'ms');
+  }
+  const lazyMax = Math.max(renders['/characters'] || 0, renders['/progress'] || 0);
+  info('懒加载最大渲染耗时(characters/progress)', `${lazyMax}ms`);
+
+  // H3) 应用内导航（底部 Tab 切换）耗时
+  await page.goto(UI + '/', { waitUntil: 'domcontentloaded' });
+  const navReady = await waitContent(page, 8000);
+  const navTimes = [];
+  const navTo = async (clickText) => {
+    const t0 = Date.now();
+    // 底部导航是固定元素，直接点底部 nav 里的文字按钮
+    await page.locator('nav button:has-text("' + clickText + '")').first().click({ timeout: 4000 }).catch(() => {});
+    await waitContent(page, 6000);
+    navTimes.push(Date.now() - t0);
+  };
+  if (navReady) {
+    await navTo('奖励'); await navTo('课程'); await navTo('进度');
+  }
+  const navMax = navTimes.length ? Math.max(...navTimes) : 0;
+  check('H-NAV', `Tab 切换最大耗时 <=1500ms (${navMax}ms)`, navMax > 0 && navMax <= 1500, { navTimes });
+
+  // H4) 完整点击链路总耗时：首页→课程→识字→奖励
+  const tFlow = Date.now();
+  await page.goto(UI + '/', { waitUntil: 'domcontentloaded' });
+  await waitContent(page, 8000);
+  await page.locator('nav button:has-text("课程")').first().click({ timeout: 4000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  await page.goto(UI + '/characters', { waitUntil: 'domcontentloaded' });
+  await waitContent(page, 8000);
+  await page.goto(UI + '/rewards', { waitUntil: 'domcontentloaded' });
+  await waitContent(page, 8000);
+  const flowMs = Date.now() - tFlow;
+  check('H-FLOW', `完整链路(首页→课程→识字→奖励) <=8000ms (${flowMs}ms)`, flowMs <= 8000, { flowMs });
+
   await ctx.close();
 }
 
