@@ -132,7 +132,7 @@ export default function Settings() {
                           {row.label}
                         </span>
                         {isRec && (
-                          <span className="shrink-0 text-[10px] leading-none bg-kid-yellow text-white px-1.5 py-0.5 rounded-full">
+                          <span className="shrink-0 text-[10px] leading-none bg-kid-yellow text-kid-ink px-1.5 py-0.5 rounded-full">
                             推荐
                           </span>
                         )}

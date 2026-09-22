@@ -35,7 +35,7 @@ export default function WordQuiz({ word, options, status, onSelect, onRetry, onN
         </p>
         <button
           onClick={() => speak(`「${word.chinese}」对应的英文单词是？`, 'zh-CN', { role: 'teach' })}
-          className="btn-3d bg-kid-yellow text-[#3a2a1a] px-2.5 py-1 inline-flex items-center gap-1 text-sm shrink-0"
+          className="btn-3d bg-kid-yellow text-kid-ink px-2.5 py-1 inline-flex items-center gap-1 text-sm shrink-0"
           title="听题目"
         >
           <Icon name="speaker" size={15} />听题
@@ -64,7 +64,7 @@ export default function WordQuiz({ word, options, status, onSelect, onRetry, onN
               再看看，正确答案是「{word.english}」
             </div>
             <div className="flex gap-2 justify-center">
-              <button onClick={onRetry} className="btn-3d bg-kid-yellow text-[#3a2a1a] px-4 py-2 text-sm">
+              <button onClick={onRetry} className="btn-3d bg-kid-yellow text-kid-ink px-4 py-2 text-sm">
                 再试一次
               </button>
               <button onClick={onNext} className="btn-3d bg-kid-blue text-white px-4 py-2 text-sm">

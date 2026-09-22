@@ -77,7 +77,7 @@ function PracticePanel({ qs, landscape, awardStar }) {
         <span className="bg-kid-blue/15 text-kid-blue font-bold rounded-full px-3 py-1 text-sm">第 {i + 1} / {qs.length} 题</span>
         {q.type === 'listen' && (
           <button onClick={() => speak(q.audio, 'zh-CN')}
-            className="btn-3d bg-kid-yellow text-[#3a2a1a] px-3 py-1 inline-flex items-center gap-1 text-sm">
+            className="btn-3d bg-kid-yellow text-kid-ink px-3 py-1 inline-flex items-center gap-1 text-sm">
             <Icon name="speaker" size={16} />听一听
           </button>
         )}
@@ -213,7 +213,7 @@ function SpeakPanel({ lesson, landscape, awardStar }) {
         {layer.img && layer.img !== layer.text && <div className="text-gray-400 text-xs mt-1">{layer.img}</div>}
       </div>
       <button onClick={startMic}
-        className={`btn-3d w-full py-3 inline-flex items-center justify-center gap-2 text-lg ${status === 'listening' ? 'bg-kid-green text-white' : 'bg-kid-pink text-[#3a2a1a]'}`}>
+        className={`btn-3d w-full py-3 inline-flex items-center justify-center gap-2 text-lg ${status === 'listening' ? 'bg-kid-green text-white' : 'bg-kid-pink text-kid-ink'}`}>
         <Icon name="mic" size={22} />{status === 'listening' ? '在听…' : '读一读'}
       </button>
       <div className="text-center min-h-[2.5rem]">{feedback || <div className="text-gray-300 text-sm">听示范，跟着读</div>}</div>
@@ -377,9 +377,9 @@ export default function HanziStudy({
       <div className="scene p-8 text-center h-[100dvh] flex flex-col items-center justify-center pop-in" style={{ borderRadius: 0 }}>
         <div className="scene-ground" />
         <div className="text-7xl mb-3 relative">🎊</div>
-        <h2 className="text-2xl font-bold text-[#3a2a1a] drop-shadow relative">本关学完啦！</h2>
-        <p className="text-[#3a2a1a] mb-4 relative">太厉害了，继续加油～</p>
-        <button onClick={onRestart} className="btn-3d bg-kid-orange text-[#3a2a1a] px-6 py-3 text-lg relative">再来一遍</button>
+        <h2 className="text-2xl font-bold text-kid-ink drop-shadow relative">本关学完啦！</h2>
+        <p className="text-kid-ink mb-4 relative">太厉害了，继续加油～</p>
+        <button onClick={onRestart} className="btn-3d bg-kid-orange text-kid-ink px-6 py-3 text-lg relative">再来一遍</button>
       </div>
     );
   }
@@ -404,7 +404,7 @@ export default function HanziStudy({
           return (
             <button key={s.id} onClick={() => setStep(i)}
               style={landscape ? { width: '2.5rem', height: '2.5rem' } : undefined}
-              className={`step-chip ${s.color} text-[#3a2a1a] ${active ? 'step-chip-active scale-105' : 'opacity-70'}`}>
+              className={`step-chip ${s.color} text-kid-ink ${active ? 'step-chip-active scale-105' : 'opacity-70'}`}>
               <span className={landscape ? 'text-base leading-none' : 'text-lg leading-none'}>{s.name}</span>
             </button>
           );
@@ -446,12 +446,12 @@ export default function HanziStudy({
               </div>
               {!revealed && (
                 <button onClick={revealPlay} disabled={!acting}
-                  className={`btn-3d mt-2 ${acting ? 'bg-kid-yellow text-[#3a2a1a]' : 'bg-gray-200 text-gray-400'} ${landscape ? 'px-6 py-2 text-base' : 'px-8 py-3 text-lg'}`}>
+                  className={`btn-3d mt-2 ${acting ? 'bg-kid-yellow text-kid-ink' : 'bg-gray-200 text-gray-400'} ${landscape ? 'px-6 py-2 text-base' : 'px-8 py-3 text-lg'}`}>
                   点一点
                 </button>
               )}
               {revealed && (
-                <button onClick={() => speak(char.hanzi, 'zh-CN')} className={`btn-3d bg-kid-blue text-[#3a2a1a] mt-3 inline-flex items-center gap-2 ${landscape ? 'px-5 py-2' : 'px-6 py-3'}`}>
+                <button onClick={() => speak(char.hanzi, 'zh-CN')} className={`btn-3d bg-kid-blue text-kid-ink mt-3 inline-flex items-center gap-2 ${landscape ? 'px-5 py-2' : 'px-6 py-3'}`}>
                   <Icon name="speaker" size={20} />听读音
                 </button>
               )}
@@ -481,10 +481,10 @@ export default function HanziStudy({
                   ))}
                 </div>
                 <div className={`flex justify-center gap-2 ${landscape ? 'mt-2' : 'mt-4'}`}>
-                  <button onClick={() => speak(char.hanzi, 'zh-CN')} className={`btn-3d bg-kid-blue text-[#3a2a1a] inline-flex items-center gap-2 ${landscape ? 'px-4 py-1.5' : 'px-5 py-2'}`}>
+                  <button onClick={() => speak(char.hanzi, 'zh-CN')} className={`btn-3d bg-kid-blue text-kid-ink inline-flex items-center gap-2 ${landscape ? 'px-4 py-1.5' : 'px-5 py-2'}`}>
                     <Icon name="speaker" size={20} />听读音
                   </button>
-                  <button onClick={() => speak(`${k.oral}。${k.shapeHint}`, 'zh-CN')} className={`btn-3d bg-kid-green text-[#3a2a1a] inline-flex items-center gap-2 ${landscape ? 'px-4 py-1.5' : 'px-5 py-2'}`}>
+                  <button onClick={() => speak(`${k.oral}。${k.shapeHint}`, 'zh-CN')} className={`btn-3d bg-kid-green text-kid-ink inline-flex items-center gap-2 ${landscape ? 'px-4 py-1.5' : 'px-5 py-2'}`}>
                     <Icon name="speaker" size={20} />听讲解
                   </button>
                 </div>
@@ -534,10 +534,10 @@ export default function HanziStudy({
                 </div>
 
                 <div className={`flex justify-center gap-2 ${landscape ? 'mt-2' : 'mt-3'}`}>
-                  <button onClick={replayWrite} className="btn-3d bg-kid-purple text-[#3a2a1a] px-4 py-2 inline-flex items-center gap-1">
+                  <button onClick={replayWrite} className="btn-3d bg-kid-purple text-kid-ink px-4 py-2 inline-flex items-center gap-1">
                     <Icon name="play" size={18} />看笔顺
                   </button>
-                  <button onClick={retryStage} className="btn-3d bg-kid-orange text-[#3a2a1a] px-4 py-2">重来</button>
+                  <button onClick={retryStage} className="btn-3d bg-kid-orange text-kid-ink px-4 py-2">重来</button>
                 </div>
 
                 {writeDone && <div className={`font-bold text-kid-green ${landscape ? 'text-base mt-1' : 'text-xl mt-2'}`}>🎉 写好啦，真棒！</div>}
@@ -557,9 +557,9 @@ export default function HanziStudy({
           <Icon name="chevronRight" size={24} className="rotate-180 text-gray-500" />
         </button>
         {canNextStep ? (
-          <button onClick={() => setStep(step + 1)} className={`btn-3d bg-kid-yellow text-[#3a2a1a] ${landscape ? 'px-6 py-2 text-base' : 'px-8 py-3 text-lg'}`}>下一步</button>
+          <button onClick={() => setStep(step + 1)} className={`btn-3d bg-kid-yellow text-kid-ink ${landscape ? 'px-6 py-2 text-base' : 'px-8 py-3 text-lg'}`}>下一步</button>
         ) : (
-          <button onClick={onNext} className={`btn-3d bg-kid-green text-[#3a2a1a] ${landscape ? 'px-6 py-2 text-base' : 'px-8 py-3 text-lg'}`}>下一个字 ›</button>
+          <button onClick={onNext} className={`btn-3d bg-kid-green text-kid-ink ${landscape ? 'px-6 py-2 text-base' : 'px-8 py-3 text-lg'}`}>下一个字 ›</button>
         )}
         <button onClick={onNext} className={`rounded-2xl bg-white/90 shadow-lg flex items-center justify-center active:scale-90 ${landscape ? 'w-10 h-10' : 'w-12 h-12'}`}>
           <Icon name="chevronRight" size={24} className="text-gray-500" />

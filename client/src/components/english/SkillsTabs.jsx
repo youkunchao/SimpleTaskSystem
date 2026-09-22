@@ -163,7 +163,7 @@ export default function SkillsTabs({ activeChild }) {
                         <div className="text-sm text-gray-600 mt-1">💡 {curGram.explanation}</div>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={quiz.retry} className="btn-kid bg-kid-yellow text-white">
+                        <button onClick={quiz.retry} className="btn-kid bg-kid-yellow text-kid-ink">
                           再试一次
                         </button>
                         <button onClick={() => quiz.goNext(grammar.length, 'test')} className="btn-kid bg-kid-blue text-white">
@@ -227,7 +227,7 @@ export default function SkillsTabs({ activeChild }) {
                         正确答案：{listenOptions[curListen.answer]}
                       </div>
                       <div className="flex gap-2 justify-center">
-                        <button onClick={quiz.retry} className="btn-kid bg-kid-yellow text-white">
+                        <button onClick={quiz.retry} className="btn-kid bg-kid-yellow text-kid-ink">
                           再试一次
                         </button>
                         <button onClick={() => quiz.goNext(listening.length, 'test')} className="btn-kid bg-kid-blue text-white">
@@ -294,7 +294,7 @@ export default function SkillsTabs({ activeChild }) {
                         正确答案：{readOptions[curRead.answer]}
                       </div>
                       <div className="flex gap-2 justify-center">
-                        <button onClick={quiz.retry} className="btn-kid bg-kid-yellow text-white">
+                        <button onClick={quiz.retry} className="btn-kid bg-kid-yellow text-kid-ink">
                           再试一次
                         </button>
                         <button onClick={() => quiz.goNext(reading.length, 'test')} className="btn-kid bg-kid-blue text-white">

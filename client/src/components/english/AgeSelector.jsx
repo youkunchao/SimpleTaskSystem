@@ -19,7 +19,7 @@ export default function AgeSelector({ groups, active, recommended, onPick }) {
           className="mascot w-16 h-16 sm:w-20 sm:h-20 floaty"
           onError={(e) => { e.currentTarget.style.display = 'none'; }}
         />
-        <div className="glass rounded-2xl rounded-bl-sm px-4 py-2 text-[15px] font-bold text-[#0B3C5D]">
+        <div className="glass rounded-2xl rounded-bl-sm px-4 py-2 text-[15px] font-bold text-kid-navy">
           请选择你的年龄，不同年龄会有不一样的学习内容哦 🐠
         </div>
       </div>
@@ -46,17 +46,17 @@ export default function AgeSelector({ groups, active, recommended, onPick }) {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className={`font-bold text-[#0B3C5D] ${landscape ? 'text-base' : 'text-xl'}`}>{g.label}</span>
+                  <span className={`font-bold text-kid-navy ${landscape ? 'text-base' : 'text-xl'}`}>{g.label}</span>
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-kid-green/20 text-kid-green">
                     {g.mode}
                   </span>
                   {rec && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-kid-yellow text-[#3a2a1a]">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-kid-yellow text-kid-ink">
                       推荐
                     </span>
                   )}
                 </div>
-                <div className={`text-[#0B3C5D]/70 mt-0.5 ${landscape ? 'text-[11px] leading-tight' : 'text-sm'}`}>
+                <div className={`text-kid-navy/70 mt-0.5 ${landscape ? 'text-[11px] leading-tight' : 'text-sm'}`}>
                   {g.desc}
                 </div>
                 <div className="text-xs text-kid-blue mt-1 inline-flex items-center gap-1 font-bold">

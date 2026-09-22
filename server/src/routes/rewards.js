@@ -11,48 +11,54 @@ function verifyChild(childId, userId) {
 }
 
 // 获取孩子奖励信息
+// 徽章解锁改为「数据驱动」：badges.metric 对应下面 stats 的 key，
+// 只要该指标达到 requirement 就自动点亮，以后新增徽章只加数据、不用改代码。
 router.get('/:child_id', (req, res) => {
   const child = verifyChild(req.params.child_id, req.userId);
   if (!child) return res.status(403).json({ error: '无权操作' });
 
-  const reward = db.prepare('SELECT * FROM rewards WHERE child_id = ?').get(req.params.child_id) || { stars: 0, streak: 0 };
+  const childId = req.params.child_id;
+  const reward = db.prepare('SELECT * FROM rewards WHERE child_id = ?').get(childId) || { stars: 0, streak: 0 };
+  const scalar = (sql) => Number(db.prepare(sql).get(childId).c || 0);
 
-  // 计算已解锁徽章
-  const allBadges = db.prepare('SELECT * FROM badges').all();
-  const unlocked = db.prepare('SELECT badge_id FROM child_badges WHERE child_id = ?').all(req.params.child_id).map(r => r.badge_id);
+  // 各维度实时统计：每枚徽章都能在前端显示"当前/目标、还差多少"
+  const stats = {
+    study_count: scalar('SELECT COUNT(*) as c FROM progress WHERE child_id = ?'),
+    correct_count: scalar('SELECT COUNT(*) as c FROM progress WHERE child_id = ? AND correct = 1'),
+    stars: Number(reward.stars || 0),
+    streak: Number(reward.streak || 0),
+    char_mastered: scalar("SELECT COUNT(DISTINCT item_id) as c FROM progress WHERE child_id = ? AND module = 'characters' AND correct = 1"),
+    english_mastered: scalar("SELECT COUNT(DISTINCT item_id) as c FROM progress WHERE child_id = ? AND module = 'english' AND correct = 1"),
+    math_correct: scalar("SELECT COUNT(*) as c FROM progress WHERE child_id = ? AND module = 'math' AND correct = 1"),
+    books_read: scalar("SELECT COUNT(DISTINCT item_id) as c FROM progress WHERE child_id = ? AND module = 'books'"),
+    chinese_mastered: scalar("SELECT COUNT(DISTINCT item_id) as c FROM progress WHERE child_id = ? AND module = 'chinese-reading' AND correct = 1"),
+    review_mastered: scalar('SELECT COUNT(*) as c FROM review_items WHERE child_id = ? AND interval_level >= 4'),
+    days_active: scalar("SELECT COUNT(DISTINCT date(created_at)) as c FROM progress WHERE child_id = ?"),
+    study_minutes: Math.round(scalar('SELECT COALESCE(SUM(duration), 0) as c FROM progress WHERE child_id = ?') / 60),
+  };
 
-  // 统计学习次数、汉字掌握数
-  const studyCount = db.prepare('SELECT COUNT(*) as c FROM progress WHERE child_id = ?').get(req.params.child_id).c;
-  const charMastered = db.prepare(`
-    SELECT COUNT(DISTINCT item_id) as c FROM progress
-    WHERE child_id = ? AND module = 'characters' AND correct = 1
-  `).get(req.params.child_id).c;
+  const allBadges = db.prepare('SELECT * FROM badges ORDER BY sort, id').all();
+  const unlockedIds = new Set(
+    db.prepare('SELECT badge_id FROM child_badges WHERE child_id = ?').all(childId).map(r => r.badge_id)
+  );
+  const grantBadge = db.prepare('INSERT OR IGNORE INTO child_badges (child_id, badge_id, unlocked_at) VALUES (?, ?, ?)');
 
   const badges = allBadges.map(b => {
-    let isUnlocked = unlocked.includes(b.id);
-    // 自动解锁判断
-    if (!isUnlocked) {
-      let achieved = false;
-      if (b.name.includes('初学') && studyCount >= 1) achieved = true;
-      if (b.name.includes('勤学') && studyCount >= 10) achieved = true;
-      if (b.name.includes('博学') && studyCount >= 50) achieved = true;
-      if (b.name.includes('星星') && reward.stars >= 50) achieved = true;
-      if (b.name.includes('坚持') && reward.streak >= 7) achieved = true;
-      if (b.name.includes('识字') && charMastered >= 20) achieved = true;
-      if (achieved) {
-        db.prepare('INSERT OR IGNORE INTO child_badges (child_id, badge_id, unlocked_at) VALUES (?, ?, ?)').run(req.params.child_id, b.id, nowLocal());
-        isUnlocked = true;
-      }
+    let isUnlocked = unlockedIds.has(b.id);
+    if (!isUnlocked && b.metric && Number(stats[b.metric] ?? 0) >= Number(b.requirement || 0)) {
+      grantBadge.run(childId, b.id, nowLocal());
+      isUnlocked = true;
     }
     return { ...b, unlocked: isUnlocked };
   });
 
   res.json({
-    stars: reward.stars || 0,
-    streak: reward.streak || 0,
+    stars: stats.stars,
+    streak: stats.streak,
     badges,
-    studyCount,
-    charMastered,
+    stats,
+    studyCount: stats.study_count,
+    charMastered: stats.char_mastered,
   });
 });
 

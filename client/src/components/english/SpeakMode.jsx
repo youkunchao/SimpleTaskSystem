@@ -205,7 +205,7 @@ export default function SpeakMode({ word, childId, onNext, onExit }) {
         {/* 慢速版：读 role='slow' 的预合成音频（语速 -30%），方便孩子听清每个音再跟读 */}
         <button
           onClick={() => speak(word.english, 'en-US', { role: 'slow' })}
-          className="btn-kid bg-kid-yellow text-[#3a2a1a] text-sm"
+          className="btn-kid bg-kid-yellow text-kid-ink text-sm"
         >
           慢速
         </button>

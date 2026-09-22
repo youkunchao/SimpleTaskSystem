@@ -12,6 +12,8 @@ import { AGE_GROUPS, CATEGORIES, WORDS as ENGLISH_WORDS } from './data/english.g
 import { PHONETICS } from './data/englishPhonetics.generated.js';
 // 数学课程体系：学段 / 知识点 / 测验 / 能力标签（数据在 math.generated.js 唯一事实源）
 import { STAGES, ABILITY_TAGS, ALL_TOPICS, QUIZZES } from './data/math.generated.js';
+// 汉字配图（按字义推导 emoji）
+import { pickEmoji } from './data/charEmoji.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dbPath = join(__dirname, '..', 'data', 'kidstar.db');
@@ -433,6 +435,132 @@ const MIGRATIONS = {
     const cols = db.prepare('PRAGMA table_info(words)').all().map((c) => c.name);
     if (!cols.includes('phonetic')) db.exec('ALTER TABLE words ADD COLUMN phonetic TEXT');
     if (!cols.includes('phonetic_tips')) db.exec('ALTER TABLE words ADD COLUMN phonetic_tips TEXT');
+  },
+
+  // 扩充徽章体系：原库只有 6 枚，且解锁条件硬编码在 rewards 路由里（按 name 关键字判断），
+  // 每加一枚都要改代码。改为数据驱动：badges 增加 metric（统计指标）与 sort（排序），
+  // 路由按 metric 取实时统计值对比 requirement，以后新增徽章只加数据即可。
+  'expand-badges-collection': () => {
+    const cols = db.prepare('PRAGMA table_info(badges)').all().map((c) => c.name);
+    if (!cols.includes('metric')) db.exec('ALTER TABLE badges ADD COLUMN metric TEXT');
+    if (!cols.includes('sort')) db.exec('ALTER TABLE badges ADD COLUMN sort INTEGER DEFAULT 0');
+
+    // 徽章库：按维度分组，同一维度分阶梯，保证孩子永远有"下一个目标"
+    const LIBRARY = [
+      // 学习次数
+      { name: '初学乍练', description: '完成第一次学习', icon: '🌱', metric: 'study_count', requirement: 1, sort: 101 },
+      { name: '勤学不辍', description: '累计学习10次', icon: '📖', metric: 'study_count', requirement: 10, sort: 102 },
+      { name: '小有名气', description: '累计学习30次', icon: '🌟', metric: 'study_count', requirement: 30, sort: 103 },
+      { name: '博学多才', description: '累计学习50次', icon: '🎓', metric: 'study_count', requirement: 50, sort: 104 },
+      { name: '学富五车', description: '累计学习100次', icon: '🏆', metric: 'study_count', requirement: 100, sort: 105 },
+      { name: '学习之王', description: '累计学习200次', icon: '👑', metric: 'study_count', requirement: 200, sort: 106 },
+
+      // 答题正确数
+      { name: '小试身手', description: '答对10道题', icon: '🎯', metric: 'correct_count', requirement: 10, sort: 201 },
+      { name: '得心应手', description: '答对50道题', icon: '✅', metric: 'correct_count', requirement: 50, sort: 202 },
+      { name: '百发百中', description: '答对100道题', icon: '💯', metric: 'correct_count', requirement: 100, sort: 203 },
+      { name: '答题达人', description: '答对300道题', icon: '🏅', metric: 'correct_count', requirement: 300, sort: 204 },
+
+      // 星星
+      { name: '星星萌芽', description: '获得10颗星星', icon: '⭐', metric: 'stars', requirement: 10, sort: 301 },
+      { name: '星星收藏家', description: '获得50颗星星', icon: '✨', metric: 'stars', requirement: 50, sort: 302 },
+      { name: '星光闪闪', description: '获得150颗星星', icon: '🌠', metric: 'stars', requirement: 150, sort: 303 },
+      { name: '银河行者', description: '获得500颗星星', icon: '🌌', metric: 'stars', requirement: 500, sort: 304 },
+
+      // 连续打卡
+      { name: '坚持起步', description: '连续打卡3天', icon: '🔥', metric: 'streak', requirement: 3, sort: 401 },
+      { name: '坚持小达人', description: '连续打卡7天', icon: '💪', metric: 'streak', requirement: 7, sort: 402 },
+      { name: '毅力之星', description: '连续打卡15天', icon: '⚡', metric: 'streak', requirement: 15, sort: 403 },
+      { name: '毅力王者', description: '连续打卡30天', icon: '🏋️', metric: 'streak', requirement: 30, sort: 404 },
+
+      // 汉字
+      { name: '识字启蒙', description: '掌握5个汉字', icon: '✍️', metric: 'char_mastered', requirement: 5, sort: 501 },
+      { name: '识字小能手', description: '掌握20个汉字', icon: '✏️', metric: 'char_mastered', requirement: 20, sort: 502 },
+      { name: '汉字达人', description: '掌握50个汉字', icon: '📕', metric: 'char_mastered', requirement: 50, sort: 503 },
+      { name: '汉字大师', description: '掌握100个汉字', icon: '🖌️', metric: 'char_mastered', requirement: 100, sort: 504 },
+
+      // 英语单词
+      { name: '单词新秀', description: '掌握10个单词', icon: '🔤', metric: 'english_mastered', requirement: 10, sort: 601 },
+      { name: '单词达人', description: '掌握30个单词', icon: '🅰️', metric: 'english_mastered', requirement: 30, sort: 602 },
+      { name: '单词高手', description: '掌握80个单词', icon: '🗣️', metric: 'english_mastered', requirement: 80, sort: 603 },
+
+      // 数学
+      { name: '数学起步', description: '答对10道数学题', icon: '➕', metric: 'math_correct', requirement: 10, sort: 701 },
+      { name: '数感小达人', description: '答对40道数学题', icon: '🔢', metric: 'math_correct', requirement: 40, sort: 702 },
+      { name: '数学小天才', description: '答对100道数学题', icon: '🧮', metric: 'math_correct', requirement: 100, sort: 703 },
+
+      // 绘本阅读
+      { name: '绘本启蒙', description: '读完第一本绘本', icon: '🐰', metric: 'books_read', requirement: 1, sort: 801 },
+      { name: '绘本小书虫', description: '读完5本绘本', icon: '📚', metric: 'books_read', requirement: 5, sort: 802 },
+      { name: '故事大王', description: '读完12本绘本', icon: '🦊', metric: 'books_read', requirement: 12, sort: 803 },
+
+      // 中文阅读
+      { name: '阅读启蒙', description: '完成3篇中文阅读', icon: '📰', metric: 'chinese_mastered', requirement: 3, sort: 901 },
+      { name: '阅读小达人', description: '完成10篇中文阅读', icon: '📖', metric: 'chinese_mastered', requirement: 10, sort: 902 },
+
+      // 复习精通（记忆等级达到"精通"）
+      { name: '温故知新', description: '5个内容复习到精通', icon: '🔁', metric: 'review_mastered', requirement: 5, sort: 1001 },
+      { name: '记忆达人', description: '20个内容复习到精通', icon: '🧠', metric: 'review_mastered', requirement: 20, sort: 1002 },
+
+      // 学习天数
+      { name: '出勤小星', description: '累计5天来学习', icon: '📅', metric: 'days_active', requirement: 5, sort: 1101 },
+      { name: '风雨无阻', description: '累计20天来学习', icon: '☔', metric: 'days_active', requirement: 20, sort: 1102 },
+
+      // 学习时长
+      { name: '专注萌芽', description: '累计学习10分钟', icon: '⏱️', metric: 'study_minutes', requirement: 10, sort: 1201 },
+      { name: '专注之星', description: '累计学习60分钟', icon: '🕐', metric: 'study_minutes', requirement: 60, sort: 1202 },
+      { name: '沉浸学霸', description: '累计学习300分钟', icon: '⌛', metric: 'study_minutes', requirement: 300, sort: 1203 },
+    ];
+
+    const findBadge = db.prepare('SELECT id FROM badges WHERE name = ?');
+    const upd = db.prepare('UPDATE badges SET description = ?, icon = ?, requirement = ?, metric = ?, sort = ? WHERE id = ?');
+    const ins = db.prepare('INSERT INTO badges (name, description, icon, requirement, metric, sort) VALUES (?, ?, ?, ?, ?, ?)');
+    let added = 0;
+    let synced = 0;
+    for (const b of LIBRARY) {
+      const row = findBadge.get(b.name);
+      if (row) {
+        upd.run(b.description, b.icon, b.requirement, b.metric, b.sort, row.id);
+        synced++;
+      } else {
+        ins.run(b.name, b.description, b.icon, b.requirement, b.metric, b.sort);
+        added++;
+      }
+    }
+    console.log(`   徽章库：新增 ${added} 枚，同步 ${synced} 枚，共 ${LIBRARY.length} 枚`);
+  },
+
+  // 汉字配图补齐：字库里约 900 个字没有 emoji，界面上全部退化成同一个 ✨，与字义无关，
+  // 孩子失去一条重要的理解线索。这里按「精修表 + 字义关键词规则」补齐，
+  // 只填空白的，绝不覆盖已有的人工精修数据。
+  'enrich-character-emoji': () => {
+    const rows = db
+      .prepare("SELECT id, hanzi, meaning, words FROM characters WHERE emoji IS NULL OR emoji = ''")
+      .all();
+    const upd = db.prepare('UPDATE characters SET emoji = ? WHERE id = ?');
+    let filled = 0;
+    for (const row of rows) {
+      const e = pickEmoji(row);
+      if (e) {
+        upd.run(e, row.id);
+        filled++;
+      }
+    }
+    console.log(`   汉字配图：需补 ${rows.length} 个，已补 ${filled} 个`);
+  },
+
+  // 汉字配图（第二轮）：补齐上一轮规则未覆盖的虚词与抽象字，目标 100% 无空白
+  'enrich-character-emoji-v2': () => {
+    const rows = db
+      .prepare("SELECT id, hanzi, meaning, words FROM characters WHERE emoji IS NULL OR emoji = ''")
+      .all();
+    const upd = db.prepare('UPDATE characters SET emoji = ? WHERE id = ?');
+    let filled = 0;
+    for (const row of rows) {
+      const e = pickEmoji(row);
+      if (e) { upd.run(e, row.id); filled++; }
+    }
+    console.log(`   汉字配图(第二轮)：需补 ${rows.length} 个，已补 ${filled} 个`);
   },
 };
 
@@ -875,6 +1003,23 @@ function seedDefaultUser() {
 }
 
 // 先迁移再播种：迁移只修正存量数据，避免把新写入的本地时间再偏移一次
+// 汉字配图自愈同步：每次启动补齐"仍为空"的配图。
+// 做成启动同步（而非一次性迁移）是为了以后往 charEmoji.js 加规则能自动生效，
+// 不必再新增迁移脚本；只填空的，绝不覆盖已有的人工数据。
+function syncCharacterEmoji() {
+  const rows = db
+    .prepare("SELECT id, hanzi, meaning, words FROM characters WHERE emoji IS NULL OR emoji = ''")
+    .all();
+  if (rows.length === 0) return;
+  const upd = db.prepare('UPDATE characters SET emoji = ? WHERE id = ?');
+  let filled = 0;
+  for (const row of rows) {
+    const e = pickEmoji(row);
+    if (e) { upd.run(e, row.id); filled++; }
+  }
+  if (filled) console.log(`   汉字配图自愈：补齐 ${filled} 个`);
+}
+
 migrate();
 seed();
 seedNewModules();
@@ -882,5 +1027,6 @@ seedMoreWords();
 seedEnglish();
 seedMath();
 seedDefaultUser();
+syncCharacterEmoji();
 
 export default db;

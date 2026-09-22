@@ -13,7 +13,7 @@ function DoneCard({ onRestart }) {
     <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
       <div className="text-6xl mb-3">🎊</div>
       <h2 className="text-2xl font-bold text-kid-orange mb-4">阅读完成啦！</h2>
-      <button onClick={onRestart} className="btn-kid bg-kid-blue text-[#3a2a1a]">再来一遍</button>
+      <button onClick={onRestart} className="btn-kid bg-kid-blue text-kid-ink">再来一遍</button>
     </div>
   );
 }
@@ -93,8 +93,8 @@ export default function ChineseReading() {
               <div className="mt-4 space-y-3">
                 <div className="text-xl font-bold text-center text-red-500">❌ 正确答案：{readOptions[curRead.answer]}</div>
                 <div className="flex gap-2 justify-center">
-                  <button onClick={quiz.retry} className="btn-kid bg-kid-yellow text-[#3a2a1a]">再试一次</button>
-                  <button onClick={() => quiz.goNext(readings.length, 'test')} className="btn-kid bg-kid-blue text-[#3a2a1a]">下一题</button>
+                  <button onClick={quiz.retry} className="btn-kid bg-kid-yellow text-kid-ink">再试一次</button>
+                  <button onClick={() => quiz.goNext(readings.length, 'test')} className="btn-kid bg-kid-blue text-kid-ink">下一题</button>
                 </div>
               </div>
             ) : null}

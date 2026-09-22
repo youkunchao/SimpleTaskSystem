@@ -101,7 +101,7 @@ export default function LearnSteps({
         <span className="bg-white/85 rounded-xl px-2 py-1 text-sm font-bold text-kid-yellow inline-flex items-center gap-1" title="星星总数">
           <Icon name="star" size={16} />{stars}
         </span>
-        <span className="bg-white/85 rounded-xl px-2 py-1 text-sm font-bold text-[#0B3C5D]">
+        <span className="bg-white/85 rounded-xl px-2 py-1 text-sm font-bold text-kid-navy">
           {idx + 1}/{total}
         </span>
         {onOpenSpeak && (
@@ -139,17 +139,17 @@ export default function LearnSteps({
   const phoneticBlock = (
     <div className="pop-in w-full max-w-md glass rounded-3xl p-5 text-center">
       <div className="text-sm font-bold text-kid-purple mb-1">💡 音标讲解</div>
-      <div className={`font-extrabold text-[#0B3C5D] ${landscape ? 'text-3xl' : 'text-4xl'}`}>{phonetic || '—'}</div>
+      <div className={`font-extrabold text-kid-navy ${landscape ? 'text-3xl' : 'text-4xl'}`}>{phonetic || '—'}</div>
       <div className="mt-3 space-y-1.5 text-left">
         {tips.length > 0 ? (
           tips.map((t) => (
-            <div key={t.sym} className="text-[#0B3C5D]/80 text-sm">
+            <div key={t.sym} className="text-kid-navy/80 text-sm">
               <span className="font-bold text-kid-purple mr-1">/{t.sym}/</span>
               {t.tip}
             </div>
           ))
         ) : (
-          <div className="text-[#0B3C5D]/60 text-sm">这个单词先跟着老师多听几遍就好啦～</div>
+          <div className="text-kid-navy/60 text-sm">这个单词先跟着老师多听几遍就好啦～</div>
         )}
       </div>
       <button
@@ -164,10 +164,10 @@ export default function LearnSteps({
   const meaningBlock = (
     <div className="pop-in w-full max-w-md glass rounded-3xl p-5 text-center">
       <div className="text-sm font-bold text-kid-orange mb-2">📖 什么意思</div>
-      <div className={`font-bold text-[#0B3C5D] leading-relaxed ${landscape ? 'text-lg' : 'text-xl'}`}>{meaning}</div>
+      <div className={`font-bold text-kid-navy leading-relaxed ${landscape ? 'text-lg' : 'text-xl'}`}>{meaning}</div>
       <button
         onClick={() => speak(meaning, 'zh-CN', { role: 'teach' })}
-        className="btn-3d mt-3 bg-kid-orange text-[#3a2a1a] inline-flex items-center gap-2 px-6 py-2.5"
+        className="btn-3d mt-3 bg-kid-orange text-kid-ink inline-flex items-center gap-2 px-6 py-2.5"
       >
         <Icon name="speaker" size={18} />读讲解
       </button>
@@ -177,10 +177,10 @@ export default function LearnSteps({
   const exampleBlock = (
     <div className="pop-in w-full max-w-md glass rounded-3xl p-5 text-center">
       <div className="text-sm font-bold text-kid-pink mb-2">💬 读例句</div>
-      <div className={`font-bold text-[#0B3C5D] leading-relaxed ${landscape ? 'text-lg' : 'text-xl'}`}>
+      <div className={`font-bold text-kid-navy leading-relaxed ${landscape ? 'text-lg' : 'text-xl'}`}>
         {exampleEn || '—'}
       </div>
-      <div className="text-[#0B3C5D]/60 mt-1">{exampleCn}</div>
+      <div className="text-kid-navy/60 mt-1">{exampleCn}</div>
       <div className="flex justify-center gap-2 mt-3">
         <button
           onClick={() => speak(exampleEn, 'en-US', { role: 'teach' })}
@@ -212,7 +212,7 @@ export default function LearnSteps({
         <Icon name="chevronRight" size={24} className="rotate-180 text-gray-500" />
       </button>
       {subStep < 3 ? (
-        <button onClick={() => goSub(subStep + 1)} className="btn-3d bg-kid-yellow text-[#3a2a1a] px-8 py-3 text-lg">
+        <button onClick={() => goSub(subStep + 1)} className="btn-3d bg-kid-yellow text-kid-ink px-8 py-3 text-lg">
           下一步 ▶
         </button>
       ) : (
@@ -234,7 +234,7 @@ export default function LearnSteps({
             {isDone ? (
               <div className="pop-in w-full max-w-md glass rounded-3xl p-8 text-center">
                 <div className="text-6xl mb-3">🎊</div>
-                <h2 className="text-2xl font-bold text-[#0B3C5D] mb-4">这一组单词学完啦！</h2>
+                <h2 className="text-2xl font-bold text-kid-navy mb-4">这一组单词学完啦！</h2>
                 <div className="flex flex-col gap-2">
                   <button onClick={onNextWord} className="btn-3d bg-kid-green text-white px-6 py-3 text-lg">
                     下一个词 ›

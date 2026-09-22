@@ -2,23 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: 'PingFang SC', 'Microsoft YaHei', 'Comic Sans MS', sans-serif, 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji';
   background: linear-gradient(135deg, #FFF8E7 0%, #FFE4F1 50%, #E0F2FE 100%);
+  background-attachment: fixed;
   min-height: 100vh;
+  color: #3B3355;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* 图标容器显式使用 emoji 字体 */
-.icon-tab, .icon-nav, .icon-btn, .emoji-card {
-  font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Twitter Color Emoji', sans-serif;
+/* 细腻的滚动条，避免默认粗黑条破坏观感 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(167, 139, 250, 0.5) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: rgba(167, 139, 250, 0.45); border-radius: 999px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* 统一的键盘可达焦点圈（仅在键盘操作时出现，不干扰触摸） */
+:where(button, a, input, [tabindex]):focus-visible {
+  outline: 3px solid rgba(96, 165, 250, 0.9);
+  outline-offset: 2px;
+  border-radius: 0.75rem;
 }
 
-/* 大字体按钮通用样式 */
+/* ==================== 设计令牌：按钮 ==================== */
+/* 大字体按钮通用样式：统一圆角、投影、触感反馈与最小点击区域 */
 .btn-kid {
-  @apply text-xl font-bold rounded-2xl px-6 py-3 transition-all duration-200 shadow-lg active:scale-95 inline-flex items-center justify-center gap-2;
+  @apply text-xl font-bold rounded-3xl px-6 py-3 transition-all duration-200 shadow-kid active:scale-95 inline-flex items-center justify-center gap-2 select-none;
+  min-height: 3.25rem;
+}
+.btn-kid:disabled { @apply opacity-50 shadow-none cursor-not-allowed active:scale-100; }
+
+/* 立体卡通按钮（厚度感） */
+.btn-3d {
+  @apply font-bold rounded-2xl transition-all duration-150 active:translate-y-1 select-none;
+  box-shadow: 0 5px 0 0 rgba(0, 0, 0, 0.18);
+}
+.btn-3d:active { box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.18); }
+.btn-3d:disabled { @apply opacity-50 active:translate-y-0; box-shadow: none; }
+
+/* 圆形图标按钮：统一 44px 触控目标 */
+.icon-round {
+  @apply inline-flex items-center justify-center rounded-full bg-white/90 shadow-kid active:scale-90 transition;
+  width: 2.75rem;
+  height: 2.75rem;
 }
 
-/* 统一图标样式 */
+/* ==================== 设计令牌：卡片 / 标签 / 标题 ==================== */
+.card-kid {
+  @apply bg-white rounded-3xl shadow-kid p-5;
+}
+.card-kid-lg { @apply bg-white rounded-[28px] shadow-kid-lg p-6; }
+
+.chip {
+  @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold;
+}
+
+.page-title {
+  @apply text-2xl font-extrabold text-kid-ink inline-flex items-center gap-2;
+}
+
+/* ==================== 统一图标样式 ==================== */
 .icon-tab {
   @apply inline-flex items-center justify-center text-2xl leading-none w-7 h-7;
 }
@@ -39,6 +92,17 @@ body {
 /* Tab 按钮统一样式 */
 .tab-btn {
   @apply inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl font-bold whitespace-nowrap transition-all duration-200 active:scale-95;
+}
+
+/* ==================== 底部导航 ==================== */
+.nav-item {
+  @apply flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-2xl transition-all duration-200 text-gray-400 active:scale-95;
+  min-width: 4.25rem;
+}
+.nav-item-active { @apply text-kid-orange; }
+.nav-item-active .nav-bubble { @apply bg-kid-orange/15 scale-110; }
+.nav-bubble {
+  @apply inline-flex items-center justify-center w-11 h-9 rounded-2xl transition-all duration-200;
 }
 
 /* 朗读中：跳动的声波，让孩子知道"正在出声" */
@@ -133,14 +197,7 @@ body {
 }
 .play-ending { animation: play-ending 0.85s ease-in-out forwards; }
 
-/* 卡通立体按钮 */
-.btn-3d {
-  @apply font-bold rounded-2xl transition-all duration-150 active:translate-y-1 select-none;
-  box-shadow: 0 5px 0 0 rgba(0, 0, 0, 0.18);
-}
-.btn-3d:active { box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.18); }
-
-/* 顶部五步条的小圆片按钮 */
+/* ==================== 顶部五步条的小圆片按钮 ==================== */
 .step-chip {
   @apply flex flex-col items-center justify-center rounded-2xl font-bold transition-all duration-200 active:scale-95;
   width: 3rem; height: 3rem;
@@ -391,3 +448,63 @@ body {
   background: #FFB01F;
 }
 
+/* ==================== 吉祥物 / 插画辅助 ==================== */
+/* 舞台上缓缓上下的吉祥物插画 */
+.mascot-hero {
+  filter: drop-shadow(0 14px 18px rgba(60, 50, 90, 0.25));
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ==================== 徽章墙（荣誉陈列柜） ==================== */
+/* 圆形奖章：本体 + 外部光环（光环颜色由 --badge-ring 从组件传入） */
+.badge-medal {
+  @apply relative inline-flex items-center justify-center rounded-full select-none;
+}
+.badge-medal::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 999px;
+  border: 3px solid var(--badge-ring, #FFB01F);
+  opacity: 0.9;
+}
+
+/* 奖章高光扫过：让已获得的徽章"闪闪发亮" */
+.badge-shine-wrap {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+@keyframes badgeShine {
+  0%   { transform: translateX(-140%) rotate(20deg); }
+  55%  { transform: translateX(240%) rotate(20deg); }
+  100% { transform: translateX(240%) rotate(20deg); }
+}
+.badge-shine {
+  position: absolute;
+  top: -50%;
+  bottom: -50%;
+  left: -70%;
+  width: 55%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.8) 50%, rgba(255, 255, 255, 0) 100%);
+  animation: badgeShine 3.4s ease-in-out infinite;
+}
+
+/* 奖章轻微悬浮呼吸 */
+@keyframes badgeFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+.badge-float { animation: badgeFloat 3s ease-in-out infinite; }
+
+/* 未解锁奖章：灰化降饱和（保留可辨识度，不与已获得抢视觉） */
+.badge-locked-img { filter: grayscale(0.85) opacity(0.7); }
+
+/* 详情弹层入场 */
+@keyframes sheetIn {
+  0%   { opacity: 0; transform: translateY(24px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.sheet-in { animation: sheetIn 0.28s cubic-bezier(0.34, 1.4, 0.64, 1) both; }

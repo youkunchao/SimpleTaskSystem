@@ -114,7 +114,7 @@ export default function AudioReader({
       {/* 朗读控制：读拼音+原文+题目+选项，再点停止 */}
       <div className="flex justify-center">
         <button onClick={playAll}
-          className={`btn-kid inline-flex items-center gap-2 ${playing ? 'bg-kid-orange text-white' : 'bg-kid-yellow text-white'}`}>
+          className={`btn-kid inline-flex items-center gap-2 ${playing ? 'bg-kid-orange text-white' : 'bg-kid-yellow text-kid-ink'}`}>
           <Icon name={playing ? 'pause' : 'play'} size={22} />
           {playing ? '停止' : '朗读全文'}
         </button>

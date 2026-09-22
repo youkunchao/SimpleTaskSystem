@@ -24,40 +24,63 @@ export default function Register() {
     }
   };
 
+  const field = (label, icon, props) => (
+    <label className="block">
+      <span className="block text-kid-ink/80 font-bold mb-1.5 text-sm">{label}</span>
+      <div className="flex items-center gap-2 px-4 rounded-2xl border-2 border-gray-200 bg-white focus-within:border-kid-pink transition">
+        <Icon name={icon} size={20} className="text-gray-300 shrink-0" />
+        <input {...props} className="w-full py-3 bg-transparent outline-none text-lg text-kid-ink" />
+      </div>
+    </label>
+  );
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="mb-2"><Icon name="sparkles" size={56} className="mx-auto text-kid-pink" /></div>
-          <h1 className="text-3xl font-bold text-kid-pink">家长注册</h1>
-          <p className="text-gray-500 mt-1">为孩子开启启蒙之旅</p>
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-8 overflow-hidden">
+      <span className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-kid-purple/30 blur-3xl" />
+      <span className="pointer-events-none absolute -bottom-20 -left-16 w-72 h-72 rounded-full bg-kid-blue/30 blur-3xl" />
+      <span className="pointer-events-none absolute top-1/4 left-8 w-40 h-40 rounded-full bg-kid-pink/25 blur-3xl" />
+
+      <div className="relative w-full max-w-md">
+        <div className="bg-white/85 backdrop-blur-md rounded-[32px] shadow-kid-lg p-8">
+          <div className="text-center mb-6">
+            <img
+              src="/assets/panda.png"
+              alt=""
+              aria-hidden="true"
+              className="mascot-hero floaty mx-auto w-24 h-24 object-contain mb-2"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
+            <h1 className="text-3xl font-extrabold text-kid-pink tracking-tight">家长注册</h1>
+            <p className="text-kid-ink/50 mt-1 text-sm">为孩子开启启蒙之旅</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {field('用户名', 'user', {
+              type: 'text', value: username, placeholder: '设置用户名',
+              onChange: e => setUsername(e.target.value),
+            })}
+            {field('密码', 'lock', {
+              type: 'password', value: password, placeholder: '至少6位',
+              onChange: e => setPassword(e.target.value),
+            })}
+            {field('确认密码', 'lock', {
+              type: 'password', value: confirm, placeholder: '再次输入密码',
+              onChange: e => setConfirm(e.target.value),
+            })}
+
+            {error && (
+              <div className="flex items-center justify-center gap-1.5 text-red-500 text-sm font-bold bg-red-50 rounded-2xl py-2">
+                <Icon name="alert" size={16} />{error}
+              </div>
+            )}
+
+            <button type="submit" className="btn-kid w-full bg-gradient-to-r from-kid-pink to-kid-purple text-white text-xl">
+              注 册
+            </button>
+          </form>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-bold mb-1 inline-flex items-center gap-1">
-              <Icon name="user" size={18} />用户名
-            </label>
-            <input type="text" value={username} onChange={e => setUsername(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-kid-pink outline-none text-lg" placeholder="设置用户名" />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-bold mb-1 inline-flex items-center gap-1">
-              <Icon name="lock" size={18} />密码
-            </label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-kid-pink outline-none text-lg" placeholder="至少6位" />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-bold mb-1 inline-flex items-center gap-1">
-              <Icon name="lock" size={18} />确认密码
-            </label>
-            <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-kid-pink outline-none text-lg" placeholder="再次输入密码" />
-          </div>
-          {error && <div className="text-red-500 text-center">{error}</div>}
-          <button type="submit" className="btn-kid w-full bg-kid-pink text-white hover:bg-kid-pink/90">注 册</button>
-        </form>
-        <p className="text-center mt-6 text-gray-500">
+
+        <p className="text-center mt-5 text-kid-ink/60">
           已有账号？<Link to="/login" className="text-kid-blue font-bold">去登录</Link>
         </p>
       </div>

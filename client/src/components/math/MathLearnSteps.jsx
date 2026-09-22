@@ -192,7 +192,7 @@ export default function MathLearnSteps({ topic, quizzes, childId, onBack, onExit
               ) : (
                 <button
                   onClick={() => goStep(subStep + 1)}
-                  className={`btn-kid bg-kid-yellow text-white flex-1 h-14 text-lg ${speaking ? '' : 'math-next'}`}
+                  className={`btn-kid bg-kid-yellow text-kid-ink flex-1 h-14 text-lg ${speaking ? '' : 'math-next'}`}
                 >
                   下一句 ▶
                 </button>
@@ -214,7 +214,7 @@ export default function MathLearnSteps({ topic, quizzes, childId, onBack, onExit
         <div className="flex gap-2 justify-center">
           <button onClick={onBack} className="btn-kid bg-kid-blue text-white">返回知识点</button>
           {onExit && (
-            <button onClick={onExit} className="btn-kid bg-kid-yellow text-white">退出</button>
+            <button onClick={onExit} className="btn-kid bg-kid-yellow text-kid-ink">退出</button>
           )}
         </div>
       </div>
@@ -279,7 +279,7 @@ export default function MathLearnSteps({ topic, quizzes, childId, onBack, onExit
               ❌ 正确答案是「{options[cur.answer]}」
             </div>
             <div className="flex gap-2 justify-center">
-              <button onClick={quiz.retry} className="btn-kid bg-kid-yellow text-white">再试一次</button>
+              <button onClick={quiz.retry} className="btn-kid bg-kid-yellow text-kid-ink">再试一次</button>
               <button onClick={() => quiz.goNext(quizzes.length, 'test')} className="btn-kid bg-kid-blue text-white">下一题</button>
             </div>
           </div>

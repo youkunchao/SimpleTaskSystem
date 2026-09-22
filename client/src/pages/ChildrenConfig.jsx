@@ -62,7 +62,7 @@ export default function ChildrenConfig() {
           <Icon name="users" size={26} className="text-kid-pink" />我的孩子
         </h1>
         <button onClick={goBack}
-          className="text-sm bg-kid-blue text-[#3a2a1a] px-4 py-2 rounded-full font-bold">完成</button>
+          className="btn-kid bg-kid-blue text-white text-base h-10 min-h-0 px-5">完成</button>
       </div>
 
       <div className="bg-white rounded-3xl shadow-lg p-5">
@@ -95,8 +95,8 @@ export default function ChildrenConfig() {
           </div>
         )}
         <button onClick={() => setShowAdd(true)}
-          className="mt-4 w-full bg-kid-green text-[#3a2a1a] py-3 rounded-2xl font-bold inline-flex items-center justify-center gap-1">
-          <Icon name="plus" size={18} />添加孩子
+          className="btn-kid mt-4 w-full bg-kid-green text-white">
+          <Icon name="plus" size={20} />添加孩子
         </button>
       </div>
 
@@ -124,8 +124,8 @@ export default function ChildrenConfig() {
               </div>
             </div>
             <div className="flex gap-3 mt-5">
-              <button onClick={() => setShowAdd(false)} className="flex-1 py-2 rounded-xl bg-gray-200 font-bold">取消</button>
-              <button onClick={handleAdd} className="flex-1 py-2 rounded-xl bg-kid-blue text-[#3a2a1a] font-bold">确定</button>
+              <button onClick={() => setShowAdd(false)} className="flex-1 py-2.5 rounded-2xl bg-gray-100 text-kid-ink/70 font-bold active:scale-95 transition">取消</button>
+              <button onClick={handleAdd} className="flex-1 py-2.5 rounded-2xl bg-kid-blue text-white font-bold active:scale-95 transition">确定</button>
             </div>
           </div>
         </div>
