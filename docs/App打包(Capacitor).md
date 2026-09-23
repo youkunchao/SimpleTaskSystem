@@ -93,6 +93,11 @@ CORS_ORIGIN=https://你的前端域名,capacitor://localhost,http://localhost
 - 如何确认真实 Origin：手机联调时，在接口请求的「网络」面板看 `Origin` 请求头，把真实值补进 `CORS_ORIGIN` 即可。
 - 临时调试可用 `CORS_ORIGIN=*`，**生产不建议**。
 
+**放行机制的精确说明**（对应 `server/src/index.js`）：
+- 后端把 `CORS_ORIGIN` 按英文逗号 `split(',')` 拆成允许列表，因此**支持一次填多个来源**（逗号后不要留空格以外的多余字符，代码已 `trim()`）。
+- 另有一条自动放行正则 `LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]):\d+$/`，会放行 `http://localhost:任意端口` 这类本机来源——但它**只匹配 `http`/`https` 且必须带端口**，所以 `capacitor://localhost` **不会**被自动放行，**必须显式写进 `CORS_ORIGIN`**。
+- 若服务器**没有设置** `CORS_ORIGIN`，默认值是 `http://localhost:5173,http://localhost:4173,http://localhost:3000`（纯开发的 dev 端口）。此时 App 请求一定被拒，返回 **HTTP 403** `{"error":"来源不被允许"}`。
+
 ### 3.3 生产配置
 确认 `api.hldbrush.com` 已设：`NODE_ENV=production`、`JWT_SECRET`（≥32 位）、`PORT`、`CORS_ORIGIN`（见 3.2）。详见 `docs/部署文档.md` / `docs/宝塔部署文档.md`。
 
@@ -115,15 +120,16 @@ npx cap sync android        # 把 dist 同步进 android 工程（更新 assets/
 cd client/android
 .\gradlew.bat assembleDebug # 调试包；assembleRelease 为正式包
 ```
-产物：
-- 调试：`client/android/app/build/outputs/apk/debug/app-debug.apk`
-- 正式：`client/android/app/build/outputs/apk/release/app-release.apk`（或 `release/app-release.aab`）
+产物（注意 APK 与 AAB 是**两条不同的命令**）：
+- 调试 APK：`assembleDebug` → `client/android/app/build/outputs/apk/debug/app-debug.apk`
+- 正式 APK：`assembleRelease` → `client/android/app/build/outputs/apk/release/app-release.apk`（直分/安装）
+- 正式 AAB：`bundleRelease` → `client/android/app/build/outputs/bundle/release/app-release.aab`（上架 Google Play）
 
 ### 4.2 分步说明
 1. **构建 Web 资源**：`npm run build:app` → `VITE_API_BASE_URL` 写死进 `dist`，输出到 `client/dist/`。
 2. **同步进原生壳**：`npx cap sync android` 把 `dist/` 拷进 `android/app/src/main/assets/public/`，并同步 plugin/权限配置。
-3. **编译**：`gradlew assembleDebug`（调试签名，默认 debug keystore）或 `assembleRelease`（需配签名，见第 6 节）。
-4. **可选**：`npx cap build android` 一条命令等价于 `sync` + `gradlew assemble`（适合不想手动敲 gradle 的场景）。
+3. **编译**：`gradlew assembleDebug`（调试签名，默认 debug keystore）；正式包用 `assembleRelease`（APK）或 `bundleRelease`（AAB），两者都需先配签名（见第 6 节）。
+4. **可选**：`npx cap build android` 一条命令等价于 `sync` + `gradlew assemble`（默认出 APK；AAB 仍需 `bundleRelease`）。
 
 ### 4.3 把包复制到发布目录（可选）
 ```powershell
@@ -147,6 +153,16 @@ Copy-Item client/android/app/build/outputs/apk/debug/app-debug.apk `
 1. 手机开启 USB 调试，连电脑。
 2. 电脑 Chrome 打开 `chrome://inspect/#devices` → 看到「启蒙星」WebView → 点 inspect。
 3. 可看 Console、Network（确认接口 `Origin`、TTS 音频是否 200）、定位白屏/报错。
+
+### 5.4 冒烟验收清单（装好后确认 App 真的能用）
+按顺序打勾，任一项失败 → 对照第 10 节排错：
+1. **能打开**：点图标启动，出现「启蒙星」首页，无白屏 / 报错。
+2. **接口通**：注册 / 登录能成功（不是一直转圈，也不是提示网络错误）。→ 不通先查 3.2 的 `CORS_ORIGIN`。
+3. **内容加载**：首页 / 学习页能拉到汉字、词语、绘本数据。
+4. **朗读有声**：点发音是清晰人声（非机械音、非无声）。→ 异常查 3.1 的 `tts-audio/`。
+5. **进度保存**：学完退出再进，学习进度 / 星星仍在（说明账号与后端存储正常）。
+6. **断网表现**：断网打开应给出可理解提示，不应闪退。
+7. **Origin 核对**（首次联调必做）：用 5.3 的 `chrome://inspect` 看请求的 `Origin` 与响应状态，确认不是 403。
 
 ---
 
@@ -190,9 +206,14 @@ android {
 set KEYSTORE_PASSWORD=你的密钥库口令
 set KEY_PASSWORD=你的密钥口令
 cd client/android
-gradlew.bat assembleRelease
+gradlew.bat assembleRelease   :: 出正式 APK（直分安装）
+gradlew.bat bundleRelease     :: 出 AAB（上架 Google Play）
 ```
-产出：`client/android/app/build/outputs/apk/release/app-release.apk`（直分）或 `app-release.aab`（上架 Google Play）。
+产出：
+- APK：`client/android/app/build/outputs/apk/release/app-release.apk`
+- AAB：`client/android/app/build/outputs/bundle/release/app-release.aab`
+
+> ⚠️ `assembleRelease` **只出 APK，不会产出 AAB**；要上架 Google Play 必须跑 `bundleRelease`。
 
 ### 6.4 keystore 保管（极重要）
 - **同一 keystore 才能覆盖安装 / 上架更新版本**。丢失 = 无法更新 App，只能换包名重发。
@@ -267,6 +288,7 @@ npx cap sync ios
 - **接口地址**：统一走 `VITE_API_BASE_URL` 注入，业务代码零改动（见第 7 节）。
 - **包名/应用名**：`com.hldbrush.kidstar` / `启蒙星`，定义在 `client/capacitor.config.json`。改了要 `cap sync` 重新生成原生壳。
 - **已提交的包**：`release/启蒙星-v1.0-android-debug.apk`（调试签名，仅测试）。正式发布请按第 6 节重新签名出 `release` 包。
+- **版本号**：App 版本在 `client/android/app/build.gradle` 的 `versionCode`（整数，每次上架必须 +1）与 `versionName`（展示用，如 `1.0`）维护；改完重新编译，改 `capacitor.config.json` 的 `appId`/`appName` 则需 `cap sync`。
 
 ---
 

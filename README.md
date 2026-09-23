@@ -216,9 +216,16 @@ node e2e/ui-e2e.mjs     # 61 项端到端检查
 
 ## 9. 部署说明
 
-1. **后端**：`cd server && npm install && npm start`（默认 3001）。确保 `tts-audio/` 整目录随代码部署。
-2. **前端**：`cd client && npm install && npm run build`，将 `dist/` 交由静态服务器或反向代理托管；`vite.config.js` 中 `/api` 需指向后端地址。
-3. **移动端**：`uniapp/` 为 UniApp 脚手架（当前仅含 `static/`，尚未启用），后续可编译为小程序 / App。
+1. **后端**：`cd server && npm install && npm start`（默认 3001）。确保 `tts-audio/` 整目录随代码部署；生产须设 `JWT_SECRET`（≥32 位）与 `CORS_ORIGIN`。
+2. **前端 Web**：
+   - 开发：`cd client && npm run dev`，`vite.config.js` 已配 dev 代理 `/api` → `http://localhost:3001`，开箱即用。
+   - 生产：`npm run build` 产出 `client/dist/`，交由静态服务器或反向代理托管。
+   - 接口基址由 `client/src/config.js` 的 `API_BASE` 决定：默认同源 `/api`；部署到独立域名或打包 App 时用构建变量 `VITE_API_BASE_URL` 覆盖，**无需改业务代码**。
+3. **移动端 App（Capacitor，当前方案）**：前端已接入 Capacitor，可打包为原生 App。完整步骤见 `docs/App打包(Capacitor).md`，已产出的安卓调试包为 `release/启蒙星-v1.0-android-debug.apk`。要点：
+   - 打包：`npm run build:app`（内置 `VITE_API_BASE_URL=https://api.hldbrush.com/api`）→ `npx cap sync android` → `gradlew assembleDebug`。
+   - 后端必须放行 App 来源：`CORS_ORIGIN` 需含 `capacitor://localhost,http://localhost`，否则 App 内接口全部 403。
+   - iOS 需在 macOS + Xcode 构建（本机 Windows 无法出 IPA）。
+4. **遗留**：`uniapp/` 为早期 UniApp 脚手架（仅含 `static/data`，未启用），当前移动端方案为 Capacitor，可忽略该目录。
 
 ---
 
