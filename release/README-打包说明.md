@@ -1,9 +1,9 @@
 # 安装包输出目录（release/）
 
-本目录存放「启蒙星」App 的安装包。
+本目录存放「启蒙星」App 的安装包。**完整打包步骤、签名出包、改后端地址、排错**见 👉 `docs/App打包(Capacitor).md`。
 
 ## 安卓 Android
-- `启蒙星-v1.0-android-debug.apk`（15.4 MB）
+- `启蒙星-v1.0-android-debug.apk`（16.1 MB）
 - **调试签名**：可直接安装到安卓手机测试（需开启"允许未知来源"）。
 - **正式发布**：用你自己的 keystore 重新签名出 release 版（AAB 上架 Google Play / APK 直分）：
   ```bash
