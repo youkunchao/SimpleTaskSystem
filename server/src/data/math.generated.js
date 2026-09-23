@@ -222,6 +222,160 @@ export const TOPICS = [
       { type: 'guide', text: '找规律填空：10、20、30、？', emoji: '🔁' },
     ],
   },
+
+  // —— 2-3岁 扩充 ——
+  {
+    key: 't-2-3-color', stage: '2-3', board: '数学思维', unit: '颜色认知', title: '认识颜色', subtitle: '红黄蓝绿', emoji: '🌈', level: 1, sort: 4,
+    tags: ['数感'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '太阳是红色的🔴，香蕉是黄色的🟡，天空是蓝色的🔵，草是绿色的🟢。', emoji: '🌈' },
+      { type: 'example', text: '苹果红红的，柠檬黄黄的。', emoji: '🍎' },
+      { type: 'guide', text: '下面哪个是红色？点一点。', emoji: '🔴' },
+    ],
+  },
+  {
+    key: 't-2-3-count5', stage: '2-3', board: '数与代数', unit: '点数', title: '数一数1-5', subtitle: '1、2、3、4、5', emoji: '🖐️', level: 1, sort: 5,
+    tags: ['数感'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '伸出小手：1根手指、2根手指…数到5。', emoji: '✋' },
+      { type: 'example', text: '🍓🍓🍓 是3个草莓，数一数：1、2、3。', emoji: '🍓' },
+      { type: 'guide', text: '🐟🐟🐟🐟 有几条鱼？点一点。', emoji: '🐟' },
+    ],
+  },
+  {
+    key: 't-2-3-moreless', stage: '2-3', board: '数与代数', unit: '多少', title: '多和少', subtitle: '哪个多？哪个少？', emoji: '⚖️', level: 1, sort: 6,
+    tags: ['数感'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '🍬🍬🍬 比 🍬 多，因为3颗比1颗多。', emoji: '🍬' },
+      { type: 'example', text: '两只手里：左手2块、右手5块，右手更多。', emoji: '✋' },
+      { type: 'guide', text: '哪边更多？🐤🐤 还是 🐤🐤🐤？', emoji: '🐤' },
+    ],
+  },
+
+  // —— 3-4岁 扩充 ——
+  {
+    key: 't-3-4-number', stage: '3-4', board: '数与代数', unit: '认数字', title: '认识数字1-10', subtitle: '1到10', emoji: '🔢', level: 1, sort: 4,
+    tags: ['数感'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '1像小棒，2像小鸭，3像耳朵，4像小旗，5像称钩。', emoji: '🔢' },
+      { type: 'example', text: '数到5：1、2、3、4、5。', emoji: '🖐️' },
+      { type: 'guide', text: '下面哪个是数字3？点一点。', emoji: '3️⃣' },
+    ],
+  },
+  {
+    key: 't-3-4-bigsmall', stage: '3-4', board: '数与代数', unit: '比较', title: '大小排序', subtitle: '从大到小', emoji: '📏', level: 1, sort: 5,
+    tags: ['数感'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '大象大🐘，老鼠小🐭。把它们排一排：大→小。', emoji: '🐘' },
+      { type: 'example', text: '🍉比🍓大，🍓比🍉小。', emoji: '🍉' },
+      { type: 'guide', text: '哪个最大？🐭🐱🐘？', emoji: '🐘' },
+    ],
+  },
+  {
+    key: 't-3-4-classify', stage: '3-4', board: '数学思维', unit: '分类', title: '简单分类', subtitle: '按颜色分', emoji: '🗂️', level: 1, sort: 6,
+    tags: ['逻辑思维'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '把一样的放一起：红色的放一堆，蓝色的放一堆。', emoji: '🔴🔵' },
+      { type: 'example', text: '🔴🔴🔵 里，红色有2个。', emoji: '🔴' },
+      { type: 'guide', text: '把圆形的挑出来吧！', emoji: '⚪' },
+    ],
+  },
+
+  // —— 4-5岁 扩充 ——
+  {
+    key: 't-4-5-number10', stage: '4-5', board: '数与代数', unit: '数序', title: '10以内的数序', subtitle: '谁在前谁在后', emoji: '🔢', level: 2, sort: 4,
+    tags: ['数感'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '排好队：1、2、3、4、5、6、7、8、9、10，后面的数比前面大。', emoji: '🚶' },
+      { type: 'example', text: '7后面是8，8后面是9。', emoji: '➡️' },
+      { type: 'guide', text: '5的后面是哪一个数？', emoji: '🔢' },
+    ],
+  },
+  {
+    key: 't-4-5-add', stage: '4-5', board: '数与代数', unit: '加法', title: '5以内加法', subtitle: '合起来是多少', emoji: '➕', level: 2, sort: 5,
+    tags: ['计算熟练度'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '2个苹果🍎🍎 加上1个苹果🍎，合起来是3个。', emoji: '🍎' },
+      { type: 'example', text: '1+2=3，数一数手指就懂啦。', emoji: '✋' },
+      { type: 'guide', text: '2+2=？点一点答案。', emoji: '➕' },
+    ],
+  },
+  {
+    key: 't-4-5-sub', stage: '4-5', board: '数与代数', unit: '减法', title: '5以内减法', subtitle: '拿走剩多少', emoji: '➖', level: 2, sort: 6,
+    tags: ['计算熟练度'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '有4块糖🍬🍬🍬🍬，吃掉1块，还剩3块。', emoji: '🍬' },
+      { type: 'example', text: '5-2=3，从5个里拿走2个剩3个。', emoji: '✋' },
+      { type: 'guide', text: '4-1=？选一选。', emoji: '➖' },
+    ],
+  },
+
+  // —— 5-6岁 扩充 ——
+  {
+    key: 't-5-6-add10', stage: '5-6', board: '数与代数', unit: '加法', title: '10以内加法', subtitle: '凑十法', emoji: '➕', level: 2, sort: 4,
+    tags: ['计算熟练度'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '8+2=10，9+1=10，凑成十很好算。', emoji: '🔟' },
+      { type: 'example', text: '7+3=10，6+4=10。', emoji: '🧮' },
+      { type: 'guide', text: '8+1=？选一选。', emoji: '➕' },
+    ],
+  },
+  {
+    key: 't-5-6-sub10', stage: '5-6', board: '数与代数', unit: '减法', title: '10以内减法', subtitle: '破十法', emoji: '➖', level: 2, sort: 5,
+    tags: ['计算熟练度'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '10-3=7，从10个里拿走3个剩7个。', emoji: '🔟' },
+      { type: 'example', text: '9-4=5，8-5=3。', emoji: '🧮' },
+      { type: 'guide', text: '10-2=？选一选。', emoji: '➖' },
+    ],
+  },
+  {
+    key: 't-5-6-pos', stage: '5-6', board: '图形与几何', unit: '位置', title: '前后与中间', subtitle: '谁在前面', emoji: '📍', level: 2, sort: 6,
+    tags: ['几何空间'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '排队时，面对的方向是前，背对的是后。', emoji: '🚶' },
+      { type: 'example', text: '🐰🐱🐶 里，小兔在最前面，小狗在最后面。', emoji: '🐰' },
+      { type: 'guide', text: '🔴🟡🔵 谁在中间？', emoji: '🟡' },
+    ],
+  },
+
+  // —— 一年级 扩充 ——
+  {
+    key: 't-g1-addword', stage: 'grade1', board: '数与代数', unit: '加法应用', title: '加法应用题', subtitle: '一共多少', emoji: '➕', level: 2, sort: 9,
+    tags: ['计算熟练度'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '“一共”用加法：树上有5只鸟，又飞来3只，一共8只。', emoji: '🐦' },
+      { type: 'example', text: '小明有6支笔，妈妈又给2支，一共8支。', emoji: '✏️' },
+      { type: 'guide', text: '河里有4只鸭，又来了3只，一共几只？', emoji: '🦆' },
+    ],
+  },
+  {
+    key: 't-g1-subword', stage: 'grade1', board: '数与代数', unit: '减法应用', title: '减法应用题', subtitle: '还剩多少', emoji: '➖', level: 2, sort: 10,
+    tags: ['计算熟练度'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '“还剩”用减法：有9颗糖，吃了4颗，还剩5颗。', emoji: '🍬' },
+      { type: 'example', text: '盘里有10个苹果，拿走3个，剩7个。', emoji: '🍎' },
+      { type: 'guide', text: '有8本书，借出2本，还剩几本？', emoji: '📚' },
+    ],
+  },
+  {
+    key: 't-g1-compare-num', stage: 'grade1', board: '数与代数', unit: '比大小', title: '100以内比大小', subtitle: '大于小于', emoji: '⚖️', level: 2, sort: 11,
+    tags: ['数感'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '位数多的数大；位数相同，从高位比。', emoji: '🔢' },
+      { type: 'example', text: '45 < 54，因为十位4比5小。', emoji: '⚖️' },
+      { type: 'guide', text: '38 和 83，哪个大？', emoji: '⚖️' },
+    ],
+  },
+  {
+    key: 't-g1-money', stage: 'grade1', board: '数与代数', unit: '人民币', title: '认识人民币', subtitle: '元角分', emoji: '💰', level: 2, sort: 12,
+    tags: ['数感'], prereqKeys: [],
+    content: [
+      { type: 'explain', text: '1元=10角，1角=10分。硬币有1元、5角、1角。', emoji: '🪙' },
+      { type: 'example', text: '1元可以换10个1角。', emoji: '💴' },
+      { type: 'guide', text: '买铅笔花2元，付5元，该找回几元？', emoji: '💰' },
+    ],
+  },
 ];
 
 // ============ 占位骨架（二~六年级，仅标题/板块，留待填充） ============
@@ -363,4 +517,62 @@ export const QUIZZES = [
   { qkey: 'q-g1pt1', topicKey: 't-g1-pattern', question: '规律：2、4、6、8、？', options: ['9', '10', '12'], answer: 1, level: 1, type: 'pattern' },
   { qkey: 'q-g1pt2', topicKey: 't-g1-pattern', question: '规律：1、3、5、7、？', options: ['8', '9', '10'], answer: 1, level: 1, type: 'pattern' },
   { qkey: 'q-g1pt3', topicKey: 't-g1-pattern', question: '10、20、30、？', options: ['31', '40', '50'], answer: 1, level: 1, type: 'pattern' },
+
+  // —— 2-3岁 扩充 测验 ——
+  { qkey: 'q-col1', topicKey: 't-2-3-color', question: '下面哪个是红色？', options: ['🔴', '🔵', '🟢'], answer: 0, level: 1, type: 'color' },
+  { qkey: 'q-col2', topicKey: 't-2-3-color', question: '香蕉是什么颜色？', options: ['红色', '黄色', '蓝色'], answer: 1, level: 1, type: 'color' },
+  { qkey: 'q-col3', topicKey: 't-2-3-color', question: '天空通常是哪种颜色？', options: ['蓝色', '绿色', '黑色'], answer: 0, level: 1, type: 'color' },
+  { qkey: 'q-c51', topicKey: 't-2-3-count5', question: '🐟🐟🐟🐟 有几条鱼？', options: ['3', '4', '5'], answer: 1, level: 1, type: 'count' },
+  { qkey: 'q-c52', topicKey: 't-2-3-count5', question: '🍎🍎🍎🍎🍎 有几个苹果？', options: ['4', '5', '6'], answer: 1, level: 1, type: 'count' },
+  { qkey: 'q-c53', topicKey: 't-2-3-count5', question: '数一数：🌟🌟🌟 是几个？', options: ['2', '3', '4'], answer: 1, level: 1, type: 'count' },
+  { qkey: 'q-ml1', topicKey: 't-2-3-moreless', question: '哪边更多？🐤🐤 还是 🐤🐤🐤？', options: ['左边2只', '右边3只', '一样多'], answer: 1, level: 1, type: 'compare' },
+  { qkey: 'q-ml2', topicKey: 't-2-3-moreless', question: '🍬🍬🍬 和 🍬🍬，哪边少？', options: ['3颗', '2颗', '一样'], answer: 1, level: 1, type: 'compare' },
+  { qkey: 'q-ml3', topicKey: 't-2-3-moreless', question: '🍎🍎 和 🍎，哪个多？', options: ['2个', '1个', '一样'], answer: 0, level: 1, type: 'compare' },
+
+  // —— 3-4岁 扩充 测验 ——
+  { qkey: 'q-n41', topicKey: 't-3-4-number', question: '下面哪个是数字3？', options: ['2', '3', '5'], answer: 1, level: 1, type: 'number' },
+  { qkey: 'q-n42', topicKey: 't-3-4-number', question: '数一数：1、2、3、？ 下一个是？', options: ['3', '4', '5'], answer: 1, level: 1, type: 'number' },
+  { qkey: 'q-n43', topicKey: 't-3-4-number', question: '哪个数字最大？', options: ['2', '8', '5'], answer: 1, level: 1, type: 'number' },
+  { qkey: 'q-bs41', topicKey: 't-3-4-bigsmall', question: '🐘 和 🐭，哪个大？', options: ['老鼠', '大象', '一样'], answer: 1, level: 1, type: 'compare' },
+  { qkey: 'q-bs42', topicKey: 't-3-4-bigsmall', question: '🍉 和 🍓，哪个小？', options: ['西瓜', '草莓', '一样'], answer: 1, level: 1, type: 'compare' },
+  { qkey: 'q-bs43', topicKey: 't-3-4-bigsmall', question: '从大到小排，最大的是？🐱🐘🐭', options: ['猫', '大象', '老鼠'], answer: 1, level: 1, type: 'compare' },
+  { qkey: 'q-cl41', topicKey: 't-3-4-classify', question: '🔴🔴🔵 里红色有几个？', options: ['1', '2', '3'], answer: 1, level: 1, type: 'sort' },
+  { qkey: 'q-cl42', topicKey: 't-3-4-classify', question: '把圆形的挑出来：🔺🔵⬜，哪个是圆？', options: ['🔺', '🔵', '⬜'], answer: 1, level: 1, type: 'shape' },
+  { qkey: 'q-cl43', topicKey: 't-3-4-classify', question: '🟡🟡🟢 按颜色分，黄色有几个？', options: ['1', '2', '3'], answer: 1, level: 1, type: 'sort' },
+
+  // —— 4-5岁 扩充 测验 ——
+  { qkey: 'q-n101', topicKey: 't-4-5-number10', question: '5的后面是几？', options: ['4', '6', '7'], answer: 1, level: 2, type: 'count' },
+  { qkey: 'q-n102', topicKey: 't-4-5-number10', question: '从1数到10，第7个数是？', options: ['6', '7', '8'], answer: 1, level: 2, type: 'count' },
+  { qkey: 'q-n103', topicKey: 't-4-5-number10', question: '比8大1的数是？', options: ['7', '9', '10'], answer: 1, level: 2, type: 'count' },
+  { qkey: 'q-a51', topicKey: 't-4-5-add', question: '2 + 1 = ？', options: ['2', '3', '4'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-a52', topicKey: 't-4-5-add', question: '3 + 2 = ？', options: ['4', '5', '6'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-a53', topicKey: 't-4-5-add', question: '小明有1块糖，妈妈给2块，一共几块？', options: ['2', '3', '4'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-s51', topicKey: 't-4-5-sub', question: '4 - 1 = ？', options: ['2', '3', '4'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-s52', topicKey: 't-4-5-sub', question: '5 - 2 = ？', options: ['2', '3', '4'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-s53', topicKey: 't-4-5-sub', question: '有5块糖，吃掉3块，还剩？', options: ['1', '2', '3'], answer: 1, level: 2, type: 'arithmetic' },
+
+  // —— 5-6岁 扩充 测验 ——
+  { qkey: 'q-a101', topicKey: 't-5-6-add10', question: '8 + 1 = ？', options: ['8', '9', '10'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-a102', topicKey: 't-5-6-add10', question: '7 + 3 = ？', options: ['9', '10', '11'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-a103', topicKey: 't-5-6-add10', question: '6 + 2 = ？', options: ['7', '8', '9'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-s101', topicKey: 't-5-6-sub10', question: '10 - 2 = ？', options: ['7', '8', '9'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-s102', topicKey: 't-5-6-sub10', question: '9 - 4 = ？', options: ['4', '5', '6'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-s103', topicKey: 't-5-6-sub10', question: '8 - 5 = ？', options: ['2', '3', '4'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-pos1', topicKey: 't-5-6-pos', question: '🔴🟡🔵 谁在中间？', options: ['🔴', '🟡', '🔵'], answer: 1, level: 2, type: 'space' },
+  { qkey: 'q-pos2', topicKey: 't-5-6-pos', question: '🐰🐱🐶 里谁在最前面？', options: ['小兔', '小猫', '小狗'], answer: 0, level: 2, type: 'space' },
+  { qkey: 'q-pos3', topicKey: 't-5-6-pos', question: '排队时，背对的方向是？', options: ['前', '后', '左'], answer: 1, level: 2, type: 'space' },
+
+  // —— 一年级 扩充 测验 ——
+  { qkey: 'q-aw1', topicKey: 't-g1-addword', question: '树上有5只鸟，又飞来3只，一共几只？', options: ['7', '8', '9'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-aw2', topicKey: 't-g1-addword', question: '小明有6支笔，妈妈给2支，一共几支？', options: ['7', '8', '9'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-aw3', topicKey: 't-g1-addword', question: '河里有4只鸭，又来3只，一共几只？', options: ['6', '7', '8'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-sw1', topicKey: 't-g1-subword', question: '有9颗糖，吃了4颗，还剩几颗？', options: ['4', '5', '6'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-sw2', topicKey: 't-g1-subword', question: '盘里10个苹果，拿走3个，剩几个？', options: ['6', '7', '8'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-sw3', topicKey: 't-g1-subword', question: '有8本书，借出2本，还剩几本？', options: ['5', '6', '7'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-cn1', topicKey: 't-g1-compare-num', question: '38 和 83，哪个大？', options: ['38', '83', '一样'], answer: 1, level: 2, type: 'compare' },
+  { qkey: 'q-cn2', topicKey: 't-g1-compare-num', question: '下面哪个数最小？', options: ['45', '54', '23'], answer: 2, level: 2, type: 'compare' },
+  { qkey: 'q-cn3', topicKey: 't-g1-compare-num', question: '60 和 59，哪个大？', options: ['60', '59', '一样'], answer: 0, level: 2, type: 'compare' },
+  { qkey: 'q-mn1', topicKey: 't-g1-money', question: '1元等于几角？', options: ['5角', '10角', '20角'], answer: 1, level: 2, type: 'concept' },
+  { qkey: 'q-mn2', topicKey: 't-g1-money', question: '买铅笔花2元，付5元，找回几元？', options: ['2', '3', '4'], answer: 1, level: 2, type: 'arithmetic' },
+  { qkey: 'q-mn3', topicKey: 't-g1-money', question: '1角等于几分？', options: ['5分', '10分', '100分'], answer: 1, level: 2, type: 'concept' },
 ];

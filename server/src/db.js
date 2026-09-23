@@ -613,6 +613,178 @@ const MIGRATIONS = {
     for (const [hanzi, emoji] of Object.entries(FIX)) n += upd.run(emoji, hanzi).changes;
     console.log(`   汉字配图(第四轮)：更新 ${n} 个字`);
   },
+
+  // 绘本扩充到 13 本：原库仅 2 本，导致「绘本小书虫(5)」「故事大王(12)」不可达。
+  // 新增 11 本适龄绘本（幂等：按标题去重），保留已有学习进度。
+  'expand-picture-books': () => {
+    const cur = db.prepare('SELECT COUNT(*) as c FROM picture_books').get().c;
+    if (cur >= 13) return;
+    const insertBook = db.prepare('INSERT INTO picture_books (title, level, cover, pages) VALUES (?, ?, ?, ?)');
+    const findBook = db.prepare('SELECT id FROM picture_books WHERE title = ?');
+    const books = [
+      {
+        title: '好饿的小蛇', level: 1, cover: '🐍',
+        pages: [
+          { text: '一条小蛇饿极了，在森林里找吃的。', img: '🌳🐍' },
+          { text: '它吞下了一个红苹果，肚子变成苹果形。', img: '🍎🐍' },
+          { text: '它又吞下香蕉、葡萄，肚子变了好多形状。', img: '🍌🍇🐍' },
+          { text: '最后它吞下一棵苹果树，好饱好开心！', img: '🌳😋' },
+        ],
+      },
+      {
+        title: '彩虹色的花', level: 1, cover: '🌈',
+        pages: [
+          { text: '早春，一朵彩虹色的花绽放了。', img: '🌸🌈' },
+          { text: '小蚂蚁路过，它送了一片花瓣当小船。', img: '🐜🚣' },
+          { text: '蜥蜴、老鼠都来要花瓣，花都送出去了。', img: '🦎🐭' },
+          { text: '冬天来了，雪盖住它，春天又开出新花。', img: '❄️🌷' },
+        ],
+      },
+      {
+        title: '小乌龟慢慢', level: 1, cover: '🐢',
+        pages: [
+          { text: '小乌龟走路很慢很慢。', img: '🐢' },
+          { text: '兔子笑话它，要和它比赛跑步。', img: '🐰🏁' },
+          { text: '兔子中途睡着了，乌龟一步一步坚持爬。', img: '😴🐢' },
+          { text: '乌龟先到了终点，大家都为它鼓掌！', img: '👏🐢' },
+        ],
+      },
+      {
+        title: '会飞的小猪', level: 2, cover: '🐷',
+        pages: [
+          { text: '小猪看见小鸟在天上飞，羡慕极了。', img: '🐷🐦' },
+          { text: '它用树叶做了翅膀，努力练习。', img: '🍃✈️' },
+          { text: '一次一次摔倒，它不放弃。', img: '💪🐷' },
+          { text: '终于，小猪借着风飞上了天空！', img: '🌤️🐷' },
+        ],
+      },
+      {
+        title: '月亮的味道', level: 2, cover: '🌙',
+        pages: [
+          { text: '小动物们想知道月亮是什么味道。', img: '🐭🌙' },
+          { text: '海龟、大象、长颈鹿叠起高高的人梯。', img: '🐢🐘🦒' },
+          { text: '小老鼠爬到最顶上，咬了一口月亮。', img: '🐭🌙' },
+          { text: '月亮像饼干一样脆，大家分着尝了尝。', img: '🍪😋' },
+        ],
+      },
+      {
+        title: '小猫钓鱼', level: 1, cover: '🐱',
+        pages: [
+          { text: '猫妈妈带小猫去河边钓鱼。', img: '🐱🎣' },
+          { text: '蝴蝶飞来，小猫放下鱼竿去追。', img: '🦋🐱' },
+          { text: '妈妈钓到好多鱼，小猫一条也没有。', img: '🐟🐱' },
+          { text: '小猫专心钓鱼，终于也钓到了一条！', img: '😺🐟' },
+        ],
+      },
+      {
+        title: '三只小羊', level: 2, cover: '🐑',
+        pages: [
+          { text: '三只小羊在山坡上吃草。', img: '🐑🌿' },
+          { text: '大灰狼来了，想吃掉它们。', img: '🐺⚠️' },
+          { text: '小羊们团结起来，用石头赶走狼。', img: '🪨🐑' },
+          { text: '它们高兴地唱起歌，庆祝胜利。', img: '🎶🐑' },
+        ],
+      },
+      {
+        title: '雪孩子', level: 2, cover: '⛄',
+        pages: [
+          { text: '兔妈妈堆了一个雪孩子陪小兔玩。', img: '🐰⛄' },
+          { text: '小兔的房子着火了，雪孩子冲进去救它。', img: '🔥⛄' },
+          { text: '雪孩子融化了，变成天上的云。', img: '☁️💧' },
+          { text: '第二年冬天，雪孩子又回来了。', img: '❄️⛄' },
+        ],
+      },
+      {
+        title: '小松鼠的坚果', level: 1, cover: '🐿️',
+        pages: [
+          { text: '秋天，小松鼠捡了很多坚果。', img: '🐿️🌰' },
+          { text: '它把坚果藏进树洞里。', img: '🌳🌰' },
+          { text: '冬天大雪封山，它靠存粮过冬。', img: '❄️🐿️' },
+          { text: '春天来了，它把剩下的坚果种进土里。', img: '🌱🐿️' },
+        ],
+      },
+      {
+        title: '爱笑的太阳', level: 1, cover: '☀️',
+        pages: [
+          { text: '太阳公公每天早起，对着大地笑。', img: '☀️😊' },
+          { text: '它照亮花朵，温暖小动物。', img: '🌻🐤' },
+          { text: '下雨时它躲进云里休息。', img: '☁️🌧️' },
+          { text: '雨停了，它又露出笑脸，挂起彩虹。', img: '🌈☀️' },
+        ],
+      },
+      {
+        title: '勇敢的小刺猬', level: 2, cover: '🦔',
+        pages: [
+          { text: '小刺猬浑身是刺，小伙伴不敢靠近。', img: '🦔' },
+          { text: '狐狸来欺负大家，小刺猬挺身而出。', img: '🦊🦔' },
+          { text: '它缩成球，把狐狸扎得跑掉了。', img: '⚽🦊' },
+          { text: '大家都说：小刺猬真勇敢，我们是朋友！', img: '🤝🦔' },
+        ],
+      },
+    ];
+    let added = 0;
+    for (const b of books) {
+      if (findBook.get(b.title)) continue;
+      insertBook.run(b.title, b.level, b.cover, JSON.stringify(b.pages));
+      added++;
+    }
+    const total = db.prepare('SELECT COUNT(*) as c FROM picture_books').get().c;
+    console.log(`   绘本：新增 ${added} 本，共 ${total} 本`);
+  },
+
+  // 中文阅读扩充到 13 篇：原库仅 6 篇，导致「阅读小达人(10)」不可达。
+  // 新增 7 篇适龄短文（幂等：按标题去重），保留已有学习进度。
+  'expand-chinese-readings': () => {
+    const cur = db.prepare('SELECT COUNT(*) as c FROM chinese_readings').get().c;
+    if (cur >= 13) return;
+    const insertReading = db.prepare('INSERT INTO chinese_readings (title, content, question, options, answer, level) VALUES (?, ?, ?, ?, ?, ?)');
+    const findReading = db.prepare('SELECT id FROM chinese_readings WHERE title = ?');
+    const readings = [
+      {
+        title: '秋天的颜色', level: 2,
+        content: '秋天来了，树叶变黄了，一片片落下来。稻田金灿灿的，像铺了金子。苹果红了，葡萄紫了。秋天真是五彩缤纷的季节！',
+        question: '稻田在秋天是什么颜色？', options: JSON.stringify(['金灿灿', '绿油油', '白茫茫', '红通通']), answer: 0,
+      },
+      {
+        title: '小公鸡学本领', level: 1,
+        content: '小公鸡想学唱歌。它天天早起练嗓子，从咯咯哒唱到天亮。慢慢地，它的歌声越来越好听，大家都夸它是小歌唱家。',
+        question: '小公鸡想学什么本领？', options: JSON.stringify(['唱歌', '跳舞', '画画', '跑步']), answer: 0,
+      },
+      {
+        title: '爱护花草', level: 2,
+        content: '公园里的花真美。小明伸手想摘一朵，妈妈连忙拦住他说："花儿是给大家看的，我们要爱护它。"小明点点头，把手缩了回来。',
+        question: '妈妈为什么不让小明摘花？', options: JSON.stringify(['花有毒', '花是给大家看的', '花会疼哭', '妈妈不喜欢']), answer: 1,
+      },
+      {
+        title: '小熊猫的一天', level: 1,
+        content: '小熊猫早上吃竹子，吃得香喷喷。中午它在树上睡午觉。下午它和好朋友玩游戏，滚来滚去真快乐。晚上它抱着尾巴睡觉了。',
+        question: '小熊猫中午在做什么？', options: JSON.stringify(['吃竹子', '睡午觉', '玩游戏', '散步']), answer: 1,
+      },
+      {
+        title: '下雨了', level: 1,
+        content: '哗啦哗啦，下雨了。小青蛙在荷叶上唱歌，小蜗牛慢慢爬回家。小朋友撑起小花伞，在雨中踩水玩，开心极了。',
+        question: '下雨时谁在荷叶上唱歌？', options: JSON.stringify(['小蜗牛', '小青蛙', '小朋友', '小花猫']), answer: 1,
+      },
+      {
+        title: '诚实的孩子', level: 2,
+        content: '小华不小心打碎了妈妈的花瓶。他害怕又后悔，最后还是告诉了妈妈。妈妈没有生气，反而夸他："你敢于承认，是个诚实的好孩子。"',
+        question: '妈妈为什么夸小华？', options: JSON.stringify(['花瓶漂亮', '他承认错误', '他哭了', '他打扫了']), answer: 1,
+      },
+      {
+        title: '小河马找朋友', level: 1,
+        content: '小河马因为没有朋友很孤单。它主动帮小兔子搬萝卜，陪小鸭子学游泳。慢慢地，大家都喜欢和它玩，它有了许多好朋友。',
+        question: '小河马怎么交到朋友的？', options: JSON.stringify(['送礼物', '主动帮忙', '大声喊', '躲起来']), answer: 1,
+      },
+    ];
+    let added = 0;
+    for (const r of readings) {
+      if (findReading.get(r.title)) continue;
+      insertReading.run(r.title, r.content, r.question, r.options, r.answer, r.level);
+      added++;
+    }
+    const total = db.prepare('SELECT COUNT(*) as c FROM chinese_readings').get().c;
+    console.log(`   中文阅读：新增 ${added} 篇，共 ${total} 篇`);
+  },
 };
 
 function migrate() {
