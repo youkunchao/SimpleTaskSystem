@@ -6,9 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:app": "cross-env VITE_API_BASE_URL=https://api.hldbrush.com/api vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/ios": "^6.1.2",
     "axios": "^1.7.7",
     "hanzi-writer": "^3.7.3",
     "hanzi-writer-data": "^2.0.1",
@@ -19,8 +23,10 @@
     "recharts": "^2.12.7"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.1.2",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
+    "cross-env": "^7.0.3",
     "playwright": "^1.63.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.12",

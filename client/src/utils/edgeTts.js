@@ -8,6 +8,7 @@
 //   - audioCache 缓存已取回的 mp3（objectURL）；进入步骤时 prefetchEdge 预热，点按直接播、首次也无延迟。
 
 import { getEdgeVoice, EDGE_TTS } from './tts.js';
+import { API_BASE } from '../config.js';
 
 // 浏览器原生直连微软神经语音（edge-tts 协议）：在"预合成 mp3 缺失"时（如数学动态题）即时合成自然语言，
 // 音色与预合成一致（晓晓/晓伊）。仅当浏览器能连通微软时生效；失败/受限自动 reject，由上层回退 Web Speech。
@@ -189,7 +190,7 @@ export function prefetchEdge(text, lang = 'zh-CN', role = 'teach') {
   const key = cacheKey(text, lang, role);
   if (audioCache.has(key)) return;
   const ac = new AbortController();
-  fetch('/api/tts', {
+  fetch(`${API_BASE}/tts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text: String(text).trim(), role, lang }),
@@ -218,7 +219,7 @@ export function speakEdge(text, lang = 'zh-CN', { role = 'teach', onStart, onEnd
     }
     const ac = new AbortController();
     currentAbort = ac;
-    fetch('/api/tts', {
+    fetch(`${API_BASE}/tts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: String(text).trim(), role, lang }),

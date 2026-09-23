@@ -210,6 +210,7 @@ node e2e/ui-e2e.mjs     # 61 项端到端检查
 | QA 测试用例与风险清单 | `docs/QA测试用例与风险清单.md` | 详细测试用例与风险登记 |
 | 部署文档 | `docs/部署文档.md` | 部署架构、环境变量、单服务器/ Nginx、TTS 音频部署与重生成、排错 |
 | 宝塔面板部署文档 | `docs/宝塔部署文档.md` | 宝塔环境准备、Node(PM2) 项目、建站反代+SSL、安全备份、TTS 音频、排错 |
+| App 打包文档（Capacitor） | `docs/App打包(Capacitor).md` | 前端打包 Android/iOS、后端地址配置、CORS 放行、签名出包、更新流程 |
 
 ---
 

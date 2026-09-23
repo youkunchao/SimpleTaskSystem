@@ -1,9 +1,10 @@
 import axios from 'axios';
+import { API_BASE } from './config.js';
 import { applyTtsConfig } from './utils/tts.js';
 import { speakEdge, speakEdgeLive, cancelEdge, prefetchEdge, clearEdgeCache } from './utils/edgeTts.js';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
 });
 
