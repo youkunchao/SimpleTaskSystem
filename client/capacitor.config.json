@@ -1,0 +1,9 @@
+{
+  "appId": "com.hldbrush.kidstar",
+  "appName": "启蒙星",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {}
+}
